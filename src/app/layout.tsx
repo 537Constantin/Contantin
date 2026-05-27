@@ -1,40 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
-import Script from "next/script";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/site/theme-provider";
-import { Navbar } from "@/components/site/navbar";
-import { Footer } from "@/components/site/footer";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} – Luxuriöse, vegane Premium-Skincare`,
+    default: `${siteConfig.name} – ${siteConfig.tagline}`,
     template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
-    "Premium Skincare",
-    "vegane Hautpflege",
-    "Luxus Beauty",
-    "Serum",
-    "Gesichtspflege",
-    "cruelty-free Kosmetik",
-    "MAISON ELORIA",
+    "AI Workforce",
+    "KI-Mitarbeiter",
+    "AI Agents",
+    "Multi-Agent System",
+    "AI SaaS",
+    "Workflow Automation",
+    "KI Sekretär",
+    "Voice AI",
   ],
   authors: [{ name: siteConfig.founder }],
   creator: siteConfig.name,
@@ -44,12 +34,12 @@ export const metadata: Metadata = {
     locale: siteConfig.locale,
     url: siteConfig.url,
     siteName: siteConfig.name,
-    title: `${siteConfig.name} – Zeitlose Schönheit. Natürlich definiert.`,
+    title: `${siteConfig.name} – ${siteConfig.tagline}`,
     description: siteConfig.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.name} – Premium Skincare`,
+    title: `${siteConfig.name} – ${siteConfig.tagline}`,
     description: siteConfig.description,
   },
   robots: {
@@ -57,59 +47,29 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
-  category: "shopping",
+  category: "technology",
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbf8f3" },
-    { media: "(prefers-color-scheme: dark)", color: "#100d0b" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f8fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#06070d" },
   ],
   width: "device-width",
   initialScale: 1,
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Brand",
-  name: siteConfig.name,
-  description: siteConfig.description,
-  url: siteConfig.url,
-  slogan: siteConfig.tagline,
-  sameAs: Object.values(siteConfig.social),
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="de"
       suppressHydrationWarning
-      className={`${inter.variable} ${playfair.variable}`}
+      className={`${inter.variable} ${display.variable} ${mono.variable}`}
     >
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <a
-            href="#shop"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-sm focus:text-canvas"
-          >
-            Zum Inhalt springen
-          </a>
-          <Navbar />
-          <main id="content">{children}</main>
-          <Footer />
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          {children}
         </ThemeProvider>
-        <Script
-          id="ld-brand"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
       </body>
     </html>
   );

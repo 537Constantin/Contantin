@@ -1,0 +1,56 @@
+import {
+  LayoutDashboard,
+  Users,
+  MessageSquare,
+  Workflow,
+  FileText,
+  Phone,
+  BarChart3,
+  UsersRound,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
+
+export interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string;
+}
+
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+export const navGroups: NavGroup[] = [
+  {
+    label: "Überblick",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "KI-Mitarbeiter", href: "/employees", icon: Users },
+      { label: "Chat", href: "/chat", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Betrieb",
+    items: [
+      { label: "Workflows", href: "/workflows", icon: Workflow },
+      { label: "Dokumente", href: "/documents", icon: FileText },
+      { label: "Telefon", href: "/calls", icon: Phone },
+    ],
+  },
+  {
+    label: "Intelligenz",
+    items: [
+      { label: "Analytics & Beratung", href: "/analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Verwaltung",
+    items: [
+      { label: "Team", href: "/team", icon: UsersRound },
+      { label: "Einstellungen", href: "/settings", icon: Settings },
+    ],
+  },
+];

@@ -1,28 +1,17 @@
 export const siteConfig = {
-  name: "MAISON ELORIA",
-  shortName: "Eloria",
-  tagline: "Zeitlose Schönheit. Natürlich definiert.",
+  name: "AI Workforce OS",
+  shortName: "Workforce OS",
+  tagline: "Dein Unternehmen. Eine KI-Belegschaft.",
   description:
-    "MAISON ELORIA – luxuriöse, vegane und dermatologisch getestete Premium-Skincare. Minimalistisch inszeniert, conversion-optimiert und für ein ruhiges, vertrauensvolles Einkaufserlebnis gestaltet.",
-  url: "https://maison-eloria.com",
+    "AI Workforce OS ist das Betriebssystem für KI-Mitarbeiter. Erstelle autonome KI-Agenten, die Telefon, Termine, E-Mails, Support, Dokumente und Beratung übernehmen – wie ein echtes digitales Team.",
+  url: "https://workforce-os.app",
   locale: "de_DE",
-  ogImage: "/opengraph-image",
-  founder: "Julian Graf von und zu Egloffstein",
-  email: "kontakt@maison-eloria.com",
+  founder: "AI Workforce OS",
   social: {
-    instagram: "https://instagram.com/maison.eloria",
-    pinterest: "https://pinterest.com/maison.eloria",
-    tiktok: "https://tiktok.com/@maison.eloria",
-    linkedin: "https://linkedin.com/company/maison-eloria",
+    x: "https://x.com/workforceos",
+    linkedin: "https://www.linkedin.com/company/workforceos",
+    github: "https://github.com/537constantin/contantin",
   },
 } as const;
 
-export const navLinks = [
-  { href: "#shop", label: "Kollektion" },
-  { href: "#brand", label: "Marke" },
-  { href: "#about", label: "Über uns" },
-  { href: "#journal", label: "Stimmen" },
-  { href: "#contact", label: "Kontakt" },
-] as const;
-
-export type NavLink = (typeof navLinks)[number];
+export type SiteConfig = typeof siteConfig;

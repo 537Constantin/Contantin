@@ -1,14 +1,17 @@
 {
-  "name": "maison-eloria",
+  "name": "ai-workforce-os",
   "version": "1.0.0",
   "private": true,
-  "description": "MAISON ELORIA – premium, conversion-optimised skincare experience built with Next.js.",
+  "description": "AI Workforce OS – the operating system for AI employees. Build autonomous AI agents that handle calls, scheduling, support, documents and consulting.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "clsx": "^2.1.1",
