@@ -4,68 +4,94 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   DESIGN TOKENS
-   Warm, editorial luxury palette — ivory / espresso / gold.
+   AI WORKFORCE OS — DESIGN TOKENS
+   Futuristic, enterprise-grade. Deep space canvas, electric
+   violet/indigo brand, cyan accents, glassmorphism surfaces.
+   Dark is the primary experience; light is a faithful invert.
    ============================================================ */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-display), var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
-  --color-canvas: #fbf8f3;
+  /* Surfaces & ink (light defaults; .dark overrides below) */
+  --color-canvas: #f7f8fb;
   --color-surface: #ffffff;
-  --color-surface-soft: #f6efe4;
-  --color-ink: #1c1714;
-  --color-ink-soft: #4a423b;
-  --color-muted: #8a7f73;
-  --color-border: #ece3d6;
-  --color-gold: #b28c56;
-  --color-gold-soft: #d8c39c;
+  --color-surface-soft: #eef1f7;
+  --color-surface-strong: #ffffff;
+  --color-ink: #0c1020;
+  --color-ink-soft: #3a4256;
+  --color-muted: #6b7385;
+  --color-border: #e2e6ef;
+  --color-border-soft: #edf0f6;
 
-  --radius-card: 1.5rem;
+  /* Brand & semantic accents */
+  --color-accent: #6d5efc;
+  --color-accent-soft: #8b7dff;
+  --color-accent-ink: #ffffff;
+  --color-cyan: #18c8e6;
+  --color-violet: #a855f7;
+  --color-success: #16b674;
+  --color-warning: #e0a106;
+  --color-danger: #ef4658;
 
-  --shadow-soft: 0 1px 2px rgba(28, 23, 20, 0.04),
-    0 12px 40px -16px rgba(28, 23, 20, 0.18);
-  --shadow-float: 0 24px 70px -28px rgba(28, 23, 20, 0.4);
+  --radius-card: 1.25rem;
+  --radius-lg: 1rem;
+
+  --shadow-soft: 0 1px 2px rgba(12, 16, 32, 0.06),
+    0 14px 40px -18px rgba(12, 16, 32, 0.22);
+  --shadow-float: 0 28px 80px -30px rgba(12, 16, 32, 0.5);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
+    0 18px 60px -20px color-mix(in srgb, var(--color-accent) 50%, transparent);
 
   --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --animate-marquee: marquee 40s linear infinite;
-  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-shimmer: shimmer 2.6s linear infinite;
+  --animate-pulse-soft: pulse-soft 2.4s var(--ease-lux) infinite;
+  --animate-float: float 7s var(--ease-lux) infinite;
+  --animate-spin-slow: spin 14s linear infinite;
 
   @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
-    }
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
   }
-
   @keyframes shimmer {
-    from {
-      background-position: -200% 0;
-    }
-    to {
-      background-position: 200% 0;
-    }
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
   }
 }
 
-/* Dark theme overrides — deep warm charcoal */
+/* Dark theme — deep space charcoal/indigo */
 .dark {
-  --color-canvas: #100d0b;
-  --color-surface: #1a1512;
-  --color-surface-soft: #221b16;
-  --color-ink: #f5efe6;
-  --color-ink-soft: #cbbfb1;
-  --color-muted: #9a8d7e;
-  --color-border: #2c2520;
-  --color-gold: #cca96e;
-  --color-gold-soft: #6f5a39;
+  --color-canvas: #06070d;
+  --color-surface: #0d0f1a;
+  --color-surface-soft: #14172642;
+  --color-surface-strong: #14182a;
+  --color-ink: #f4f6fd;
+  --color-ink-soft: #c2c8da;
+  --color-muted: #818aa3;
+  --color-border: #1e2336;
+  --color-border-soft: #171b2b;
 
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3),
-    0 18px 50px -20px rgba(0, 0, 0, 0.7);
-  --shadow-float: 0 28px 80px -30px rgba(0, 0, 0, 0.8);
+  --color-accent: #7c6dff;
+  --color-accent-soft: #9a8dff;
+  --color-cyan: #2dd4ef;
+  --color-violet: #b96bff;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4),
+    0 20px 56px -24px rgba(0, 0, 0, 0.8);
+  --shadow-float: 0 32px 90px -34px rgba(0, 0, 0, 0.9);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent),
+    0 20px 70px -18px color-mix(in srgb, var(--color-accent) 55%, transparent);
 }
 
 /* ============================================================
@@ -92,21 +118,32 @@
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--color-gold) 30%, transparent);
+    background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
     color: var(--color-ink);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-gold);
-    outline-offset: 3px;
-    border-radius: 4px;
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 
-  /* Respect reduced motion globally */
+  /* Custom scrollbar for the app shell */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
@@ -118,37 +155,74 @@
 /* ============================================================
    UTILITIES
    ============================================================ */
-@utility font-serif {
-  font-family: var(--font-serif);
+@utility font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+@utility font-mono {
+  font-family: var(--font-mono);
 }
 
 @utility text-balance {
   text-wrap: balance;
 }
 
-@utility text-gradient-gold {
+@utility text-gradient {
   background: linear-gradient(
     100deg,
-    var(--color-gold) 0%,
-    color-mix(in srgb, var(--color-gold) 55%, var(--color-ink)) 60%
+    var(--color-ink) 0%,
+    color-mix(in srgb, var(--color-accent) 80%, var(--color-cyan)) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-@utility glass {
-  background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+@utility text-gradient-brand {
+  background: linear-gradient(
+    100deg,
+    var(--color-accent) 0%,
+    var(--color-cyan) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* Subtle film-grain / vignette overlay helper */
+/* Frosted glass panel */
+@utility glass {
+  background-color: color-mix(in srgb, var(--color-surface) 62%, transparent);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+
+/* Card surface helper */
+@utility panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Glowing brand ring (hover states / focus highlights) */
+@utility ring-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Subtle dotted grid / noise */
+@utility grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-border) 60%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
 @utility noise {
   background-image: radial-gradient(
-      circle at 1px 1px,
-      color-mix(in srgb, var(--color-ink) 8%, transparent) 1px,
-      transparent 0
-    );
-  background-size: 4px 4px;
+    circle at 1px 1px,
+    color-mix(in srgb, var(--color-ink) 6%, transparent) 1px,
+    transparent 0
+  );
+  background-size: 5px 5px;
 }
