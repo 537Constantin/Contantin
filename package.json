@@ -14,6 +14,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "motion": "^11.15.0",

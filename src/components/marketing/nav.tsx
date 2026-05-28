@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/site/theme-toggle";
+import { clerkEnabled } from "@/lib/auth";
 
 const links = [
   { href: "#features", label: "Funktionen" },
@@ -37,9 +38,20 @@ export function MarketingNav() {
 
         <div className="flex items-center gap-1.5">
           <div className="hidden sm:block"><ThemeToggle /></div>
-          <Button asChild variant="accent" size="sm" className="hidden sm:inline-flex">
-            <Link href="/dashboard">Dashboard öffnen</Link>
-          </Button>
+          {clerkEnabled ? (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link href="/sign-in">Anmelden</Link>
+              </Button>
+              <Button asChild variant="accent" size="sm" className="hidden sm:inline-flex">
+                <Link href="/sign-up">Kostenlos starten</Link>
+              </Button>
+            </>
+          ) : (
+            <Button asChild variant="accent" size="sm" className="hidden sm:inline-flex">
+              <Link href="/dashboard">Dashboard öffnen</Link>
+            </Button>
+          )}
           <button onClick={() => setOpen((v) => !v)} className="grid h-9 w-9 place-items-center rounded-full text-ink md:hidden" aria-label="Menü">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -53,9 +65,20 @@ export function MarketingNav() {
               {l.label}
             </a>
           ))}
-          <Button asChild variant="accent" size="sm" className="mt-2 w-full">
-            <Link href="/dashboard">Dashboard öffnen</Link>
-          </Button>
+          {clerkEnabled ? (
+            <div className="mt-2 flex flex-col gap-2">
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link href="/sign-in" onClick={() => setOpen(false)}>Anmelden</Link>
+              </Button>
+              <Button asChild variant="accent" size="sm" className="w-full">
+                <Link href="/sign-up" onClick={() => setOpen(false)}>Kostenlos starten</Link>
+              </Button>
+            </div>
+          ) : (
+            <Button asChild variant="accent" size="sm" className="mt-2 w-full">
+              <Link href="/dashboard" onClick={() => setOpen(false)}>Dashboard öffnen</Link>
+            </Button>
+          )}
         </div>
       )}
     </header>
