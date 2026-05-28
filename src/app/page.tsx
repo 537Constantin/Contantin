@@ -46,11 +46,10 @@ export default function LandingPage() {
     <div className="relative overflow-hidden">
       <MarketingNav />
 
-      {/* ambient glows */}
+      {/* ambient grid (subtle, works on white & dark) */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-[-10%] h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-accent)_28%,transparent),transparent_70%)] blur-3xl" />
-        <div className="absolute right-[-10%] top-[30%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-cyan)_22%,transparent),transparent_70%)] blur-3xl" />
-        <div className="absolute inset-0 grid-bg opacity-[0.35] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
+        <div className="absolute left-1/2 top-[-12%] h-[460px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-ink)_6%,transparent),transparent_70%)] blur-3xl" />
+        <div className="absolute inset-0 grid-bg opacity-60 [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
       </div>
 
       {/* HERO */}
@@ -140,7 +139,7 @@ export default function LandingPage() {
           {features.map((f) => (
             <StaggerItem key={f.title}>
               <div className="group h-full rounded-[var(--radius-card)] border border-border bg-surface p-5 transition-[transform,border-color,box-shadow] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/30 hover:shadow-[var(--shadow-glow)]">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-white">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-canvas">
                   <f.icon className="h-5 w-5" />
                 </span>
                 <h3 className="mt-4 font-semibold text-ink">{f.title}</h3>

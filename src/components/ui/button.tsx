@@ -9,7 +9,7 @@ const variants: Record<Variant, string> = {
   primary:
     "bg-ink text-canvas hover:bg-ink/90 shadow-[var(--shadow-soft)]",
   accent:
-    "bg-[linear-gradient(100deg,var(--color-accent),var(--color-cyan))] text-white shadow-[var(--shadow-soft)] hover:brightness-110 hover:shadow-[var(--shadow-glow)]",
+    "bg-ink text-canvas shadow-[var(--shadow-soft)] hover:bg-ink/90 hover:shadow-[var(--shadow-glow)]",
   outline:
     "border border-border bg-surface/40 text-ink hover:bg-surface-soft hover:border-accent/40",
   ghost: "bg-transparent text-ink-soft hover:bg-surface-soft hover:text-ink",

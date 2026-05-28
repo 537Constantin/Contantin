@@ -5,9 +5,9 @@
 
 /* ============================================================
    AI WORKFORCE OS — DESIGN TOKENS
-   Futuristic, enterprise-grade. Deep space canvas, electric
-   violet/indigo brand, cyan accents, glassmorphism surfaces.
-   Dark is the primary experience; light is a faithful invert.
+   Clean, editorial monochrome. White canvas, black details,
+   subtle grays, soft shadows. Light is the primary experience;
+   dark is a faithful invert (toggle in the top bar / nav).
    ============================================================ */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -15,34 +15,34 @@
   --font-mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Surfaces & ink (light defaults; .dark overrides below) */
-  --color-canvas: #f7f8fb;
+  --color-canvas: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-soft: #eef1f7;
-  --color-surface-strong: #ffffff;
-  --color-ink: #0c1020;
-  --color-ink-soft: #3a4256;
-  --color-muted: #6b7385;
-  --color-border: #e2e6ef;
-  --color-border-soft: #edf0f6;
+  --color-surface-soft: #f4f4f5;
+  --color-surface-strong: #fafafa;
+  --color-ink: #09090b;
+  --color-ink-soft: #3f3f46;
+  --color-muted: #71717a;
+  --color-border: #e4e4e7;
+  --color-border-soft: #f1f1f3;
 
-  /* Brand & semantic accents */
-  --color-accent: #6d5efc;
-  --color-accent-soft: #8b7dff;
+  /* Brand = monochrome ink. "Details" are black in light, white in dark. */
+  --color-accent: #09090b;
+  --color-accent-soft: #27272a;
   --color-accent-ink: #ffffff;
-  --color-cyan: #18c8e6;
-  --color-violet: #a855f7;
-  --color-success: #16b674;
-  --color-warning: #e0a106;
-  --color-danger: #ef4658;
+  --color-cyan: #6b7280;
+  --color-violet: #52525b;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
 
   --radius-card: 1.25rem;
   --radius-lg: 1rem;
 
-  --shadow-soft: 0 1px 2px rgba(12, 16, 32, 0.06),
-    0 14px 40px -18px rgba(12, 16, 32, 0.22);
-  --shadow-float: 0 28px 80px -30px rgba(12, 16, 32, 0.5);
-  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
-    0 18px 60px -20px color-mix(in srgb, var(--color-accent) 50%, transparent);
+  --shadow-soft: 0 1px 2px rgba(9, 9, 11, 0.05),
+    0 12px 32px -16px rgba(9, 9, 11, 0.12);
+  --shadow-float: 0 28px 80px -30px rgba(9, 9, 11, 0.28);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 14%, transparent),
+    0 18px 50px -22px rgba(9, 9, 11, 0.22);
 
   --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -70,28 +70,32 @@
   }
 }
 
-/* Dark theme — deep space charcoal/indigo */
+/* Dark theme — clean near-black, white details */
 .dark {
-  --color-canvas: #06070d;
-  --color-surface: #0d0f1a;
-  --color-surface-soft: #14172642;
-  --color-surface-strong: #14182a;
-  --color-ink: #f4f6fd;
-  --color-ink-soft: #c2c8da;
-  --color-muted: #818aa3;
-  --color-border: #1e2336;
-  --color-border-soft: #171b2b;
+  --color-canvas: #0a0a0a;
+  --color-surface: #141416;
+  --color-surface-soft: #1d1d20;
+  --color-surface-strong: #18181b;
+  --color-ink: #fafafa;
+  --color-ink-soft: #d4d4d8;
+  --color-muted: #8a8a93;
+  --color-border: #2a2a2e;
+  --color-border-soft: #1f1f22;
 
-  --color-accent: #7c6dff;
-  --color-accent-soft: #9a8dff;
-  --color-cyan: #2dd4ef;
-  --color-violet: #b96bff;
+  --color-accent: #fafafa;
+  --color-accent-soft: #d4d4d8;
+  --color-accent-ink: #09090b;
+  --color-cyan: #a1a1aa;
+  --color-violet: #c4c4cc;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #f87171;
 
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4),
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.5),
     0 20px 56px -24px rgba(0, 0, 0, 0.8);
   --shadow-float: 0 32px 90px -34px rgba(0, 0, 0, 0.9);
-  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent),
-    0 20px 70px -18px color-mix(in srgb, var(--color-accent) 55%, transparent);
+  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 16%, transparent),
+    0 20px 60px -22px rgba(0, 0, 0, 0.7);
 }
 
 /* ============================================================

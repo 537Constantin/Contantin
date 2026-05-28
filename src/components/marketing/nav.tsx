@@ -20,7 +20,7 @@ export function MarketingNav() {
       <div className="mx-auto mt-3 flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-border glass px-3 py-2 sm:px-4">
         <Link href="/" className="flex items-center gap-2 pl-1">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] shadow-[var(--shadow-glow)]">
-            <Sparkles className="h-4 w-4 text-white" />
+            <Sparkles className="h-4 w-4 text-canvas" />
           </span>
           <span className="text-sm font-semibold tracking-tight text-ink">
             Workforce<span className="text-gradient-brand"> OS</span>

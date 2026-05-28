@@ -156,7 +156,7 @@ function ChatView() {
           {empty ? (
             <div className="flex flex-col items-center justify-center pt-10 text-center">
               <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] shadow-[var(--shadow-glow)]">
-                <Sparkles className="h-8 w-8 text-white" />
+                <Sparkles className="h-8 w-8 text-canvas" />
               </span>
               <h2 className="mt-5 font-display text-2xl font-semibold text-ink">
                 Wie kann {agent.name} dir helfen?
@@ -251,7 +251,7 @@ function ChatView() {
             <button
               type="submit"
               disabled={!input.trim()}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] text-white transition-opacity disabled:opacity-40"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink text-canvas transition-opacity disabled:opacity-40"
               aria-label="Senden"
             >
               <ArrowUp className="h-[18px] w-[18px]" />
