@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { Menu, Search, Bell, Command } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
+import { clerkEnabled } from "@/lib/auth";
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
   return (
@@ -42,10 +44,18 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
           </button>
           <ThemeToggle />
-          <button className="ml-1 flex items-center gap-2 rounded-full p-0.5 pr-2 hover:bg-surface-soft" aria-label="Konto">
-            <Avatar name="Constantin Weber" color="#7c6dff" size="sm" />
-            <span className="hidden text-sm font-medium text-ink lg:block">Constantin</span>
-          </button>
+          {clerkEnabled ? (
+            <div className="ml-1.5 grid place-items-center">
+              <UserButton
+                appearance={{ elements: { avatarBox: "h-8 w-8" } }}
+              />
+            </div>
+          ) : (
+            <button className="ml-1 flex items-center gap-2 rounded-full p-0.5 pr-2 hover:bg-surface-soft" aria-label="Konto">
+              <Avatar name="Constantin Weber" color="#7c6dff" size="sm" />
+              <span className="hidden text-sm font-medium text-ink lg:block">Constantin</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
