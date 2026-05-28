@@ -15,7 +15,7 @@ export function MarketingFooter() {
         <div>
           <Link href="/" className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))]">
-              <Sparkles className="h-4 w-4 text-white" />
+              <Sparkles className="h-4 w-4 text-canvas" />
             </span>
             <span className="text-sm font-semibold tracking-tight text-ink">Workforce<span className="text-gradient-brand"> OS</span></span>
           </Link>

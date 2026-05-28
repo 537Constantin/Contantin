@@ -69,7 +69,7 @@ function Brand() {
   return (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-5">
       <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] shadow-[var(--shadow-glow)]">
-        <Sparkles className="h-4.5 w-4.5 text-white" />
+        <Sparkles className="h-4.5 w-4.5 text-canvas" />
       </span>
       <span className="text-[15px] font-semibold tracking-tight text-ink">
         Workforce<span className="text-gradient-brand"> OS</span>
@@ -82,7 +82,7 @@ function WorkspaceSwitcher() {
   return (
     <div className="px-3 pb-3">
       <button className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface-soft/60 px-3 py-2.5 text-left transition-colors hover:border-accent/30">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-[linear-gradient(135deg,#7c6dff,#2dd4ef)] text-xs font-bold text-white">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-xs font-bold text-canvas">
           CW
         </span>
         <span className="min-w-0 flex-1">

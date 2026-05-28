@@ -40,7 +40,7 @@ export default function DocumentsPage() {
 
       {/* Dropzone */}
       <label className="mt-6 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed border-border bg-surface-soft/30 px-6 py-10 text-center transition-colors hover:border-accent/40">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] text-white">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-ink text-canvas">
           <Upload className="h-6 w-6" />
         </span>
         <p className="mt-1 text-sm font-medium text-ink">Dateien hierher ziehen oder klicken</p>
