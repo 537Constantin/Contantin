@@ -137,4 +137,7 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** Optional file attached to a user message. `text` is the readable content
+   * (null for binary files that are attached only as a reference). */
+  attachment?: { name: string; sizeKb: number; text: string | null };
 }
