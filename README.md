@@ -54,6 +54,26 @@ Mit gesetztem `OPENAI_API_KEY` ruft `/api/chat` das echte Modell mit
 agentenspezifischem System-Prompt auf und streamt die Tokens. Antwortet die API
 mit `X-Workforce-Mode: live` (statt `demo`), ist der Live-Modus aktiv.
 
+### Zahlungen aktivieren (Stripe)
+
+Die Abo-Plans (`Starter`, `Growth`, `Enterprise`) sind zentral in
+`src/lib/billing.ts` definiert und werden von Landingpage, Einstellungen und
+Checkout gemeinsam genutzt. **Ohne Schlüssel** läuft der Checkout im Demo-Modus:
+Ein Klick auf einen Plan führt zur Erfolgsseite, ohne dass etwas berechnet wird.
+
+Für echte Zahlungen (kostenloser Test-Modus bei Stripe):
+
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_STARTER=price_...   # wiederkehrender Monatspreis
+STRIPE_PRICE_GROWTH=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...  # optional, prüft /api/billing/webhook
+```
+
+`/api/billing/checkout` erstellt dann eine echte Stripe-Checkout-Session
+(per REST, ohne SDK), `/api/billing/webhook` verifiziert eingehende Events.
+Die Persistenz der Abos erfolgt, sobald die Datenbank (Prisma) angebunden ist.
+
 ---
 
 ## 🧱 Architektur

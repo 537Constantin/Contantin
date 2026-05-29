@@ -9,7 +9,9 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { CheckoutButton } from "@/components/billing/checkout-button";
 import { employees, roleMeta } from "@/lib/data/employees";
+import { plans, isPurchasable } from "@/lib/billing";
 
 const features = [
   { icon: Phone, title: "Telefon-Assistent", desc: "Menschlich klingende Voice-AI nimmt Anrufe an, transkribiert live und bucht Termine." },
@@ -33,12 +35,6 @@ const stats = [
   { value: "81 %", label: "Automatisierungsrate" },
   { value: "38 Sek.", label: "Ø Antwortzeit" },
   { value: "24/7", label: "verfügbar" },
-];
-
-const plans = [
-  { name: "Starter", price: "49 €", desc: "Für Einzelunternehmer & kleine Teams", features: ["3 KI-Mitarbeiter", "1.000 Aktionen / Monat", "E-Mail & Chat", "Basis-Analytics"], cta: "Kostenlos starten", highlight: false },
-  { name: "Growth", price: "199 €", desc: "Für wachsende Unternehmen", features: ["10 KI-Mitarbeiter", "10.000 Aktionen / Monat", "Telefon-Assistent", "Workflows & Automation", "Erweiterte Analytics"], cta: "14 Tage testen", highlight: true },
-  { name: "Enterprise", price: "Individuell", desc: "Für große Organisationen", features: ["Unbegrenzte Agenten", "Unbegrenzte Aktionen", "SSO & Audit-Logs", "SLA & dedizierter Support", "On-Premise möglich"], cta: "Vertrieb kontaktieren", highlight: false },
 ];
 
 export default function LandingPage() {
@@ -204,8 +200,8 @@ export default function LandingPage() {
                   <Badge variant="accent" className="absolute -top-3 left-1/2 -translate-x-1/2">Beliebt</Badge>
                 )}
                 <h3 className="font-display text-xl font-semibold text-ink">{p.name}</h3>
-                <p className="mt-1 text-sm text-muted">{p.desc}</p>
-                <p className="mt-4 font-display text-4xl font-bold text-ink">{p.price}<span className="text-base font-normal text-muted">{p.price !== "Individuell" && "/mo"}</span></p>
+                <p className="mt-1 text-sm text-muted">{p.description}</p>
+                <p className="mt-4 font-display text-4xl font-bold text-ink">{p.priceLabel}<span className="text-base font-normal text-muted">{p.price != null && "/mo"}</span></p>
                 <ul className="mt-5 flex-1 space-y-2.5">
                   {p.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-ink-soft">
@@ -213,9 +209,15 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Button asChild variant={p.highlight ? "accent" : "outline"} className="mt-6 w-full">
-                  <Link href="/dashboard">{p.cta}</Link>
-                </Button>
+                {isPurchasable(p) ? (
+                  <CheckoutButton planId={p.id} variant={p.highlight ? "accent" : "outline"} className="mt-6 w-full">
+                    {p.cta}
+                  </CheckoutButton>
+                ) : (
+                  <Button asChild variant={p.highlight ? "accent" : "outline"} className="mt-6 w-full">
+                    <a href={p.contact}>{p.cta}</a>
+                  </Button>
+                )}
               </div>
             </Reveal>
           ))}
