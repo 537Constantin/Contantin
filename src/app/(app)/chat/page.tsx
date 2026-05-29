@@ -2,14 +2,17 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowUp, Sparkles, ChevronDown, Square, Paperclip, Mic } from "lucide-react";
+import { ArrowUp, Sparkles, ChevronDown, Square, Paperclip, Mic, X, FileText } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/app/status";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { employees } from "@/lib/data/employees";
 import { loadGraphs } from "@/lib/graphs";
+import { isTextFile, readTextFile, formatBytes, loadUserDocuments, MAX_TEXT_CHARS } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
+
+type Attachment = NonNullable<ChatMessage["attachment"]>;
 
 const suggestions = [
   "Fasse meine Termine für morgen zusammen",
@@ -36,6 +39,9 @@ function ChatView() {
   const [streaming, setStreaming] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [attachment, setAttachment] = React.useState<Attachment | null>(null);
+  const [fileNote, setFileNote] = React.useState<string | null>(null);
 
   const agent = employees.find((e) => e.id === agentId) ?? employees[0];
 
@@ -48,21 +54,31 @@ function ChatView() {
   React.useEffect(() => {
     if (didInit.current) return;
     const prompt = params.get("prompt");
-    if (prompt) {
-      didInit.current = true;
-      void send(prompt);
+    const docId = params.get("doc");
+    if (!prompt && !docId) return;
+    didInit.current = true;
+
+    // A "doc" param means we were sent here from the documents library — load
+    // that document and attach it so the agent can actually read it.
+    let file: Attachment | undefined;
+    if (docId) {
+      const doc = loadUserDocuments().find((d) => d.id === docId);
+      if (doc) file = { name: doc.name, sizeKb: doc.sizeKb, text: doc.text };
     }
+    void send(prompt ?? `Fasse die angehängte Datei „${file?.name ?? ""}" zusammen.`, file);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
-  async function send(text: string) {
+  async function send(text: string, file?: Attachment) {
     const content = text.trim();
-    if (!content || streaming) return;
-    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content };
+    if ((!content && !file) || streaming) return;
+    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content, attachment: file };
     const assistantId = crypto.randomUUID();
     const history = [...messages, userMsg];
     setMessages([...history, { id: assistantId, role: "assistant", content: "" }]);
     setInput("");
+    setAttachment(null);
+    setFileNote(null);
     setStreaming(true);
 
     const controller = new AbortController();
@@ -74,7 +90,12 @@ function ChatView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           agentId,
-          messages: history.map((m) => ({ role: m.role, content: m.content })),
+          messages: history.map((m) => ({
+            role: m.role,
+            content: m.attachment?.text
+              ? `${m.content}\n\n--- Angehängte Datei „${m.attachment.name}" ---\n${m.attachment.text}`
+              : m.content,
+          })),
           graphs: loadGraphs(),
         }),
         signal: controller.signal,
@@ -106,6 +127,29 @@ function ChatView() {
   function stop() {
     abortRef.current?.abort();
     setStreaming(false);
+  }
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the user pick the same file again later
+    if (!file) return;
+    setFileNote(null);
+    const sizeKb = Math.max(1, Math.round(file.size / 1024));
+    if (isTextFile(file)) {
+      try {
+        const text = await readTextFile(file);
+        setAttachment({ name: file.name, sizeKb, text: text.slice(0, MAX_TEXT_CHARS) });
+        if (text.length > MAX_TEXT_CHARS) {
+          setFileNote("Große Datei – nur der Anfang wird an die KI übergeben.");
+        }
+      } catch {
+        setFileNote("Diese Datei konnte nicht gelesen werden.");
+      }
+    } else {
+      // Binary file: attach as a reference; automatic reading is text-only for now.
+      setAttachment({ name: file.name, sizeKb, text: null });
+      setFileNote("Angehängt. Automatisch lesen kann die KI aktuell Textdateien (.txt, .md, .csv, Code). PDF/Word/Bild folgt.");
+    }
   }
 
   const empty = messages.length === 0;
@@ -214,7 +258,15 @@ function ChatView() {
                     ) : m.role === "assistant" ? (
                       <ChatMarkdown content={m.content} />
                     ) : (
-                      <p className="text-[15px] leading-relaxed">{m.content}</p>
+                      <div>
+                        {m.attachment && (
+                          <div className="mb-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-canvas/15 px-2 py-1 text-xs">
+                            <FileText className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{m.attachment.name}</span>
+                          </div>
+                        )}
+                        {m.content && <p className="text-[15px] leading-relaxed">{m.content}</p>}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -226,14 +278,41 @@ function ChatView() {
 
       {/* Composer */}
       <div className="border-t border-border px-4 py-4 sm:px-6">
+        {(attachment || fileNote) && (
+          <div className="mx-auto mb-2 w-full max-w-3xl">
+            {attachment && (
+              <div className="inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-ink">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-accent" />
+                <span className="max-w-[220px] truncate">{attachment.name}</span>
+                <span className="shrink-0 text-muted">{formatBytes(attachment.sizeKb * 1024)}</span>
+                {attachment.text === null && <span className="shrink-0 text-warning">· nur Referenz</span>}
+                <button
+                  type="button"
+                  onClick={() => { setAttachment(null); setFileNote(null); }}
+                  className="ml-0.5 shrink-0 text-muted hover:text-danger"
+                  aria-label="Anhang entfernen"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            {fileNote && <p className="mt-1 text-xs text-warning">{fileNote}</p>}
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            send(input);
+            send(input, attachment ?? undefined);
           }}
           className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-2xl border border-border bg-surface p-2 shadow-[var(--shadow-soft)] focus-within:border-accent/40"
         >
-          <button type="button" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-muted hover:bg-surface-soft hover:text-ink" aria-label="Datei anhängen">
+          <input ref={fileInputRef} type="file" className="sr-only" onChange={onPickFile} />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-muted hover:bg-surface-soft hover:text-ink"
+            aria-label="Datei anhängen"
+          >
             <Paperclip className="h-[18px] w-[18px]" />
           </button>
           <textarea
@@ -242,7 +321,7 @@ function ChatView() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                send(input);
+                send(input, attachment ?? undefined);
               }
             }}
             rows={1}
@@ -264,7 +343,7 @@ function ChatView() {
           ) : (
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() && !attachment}
               className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink text-canvas transition-opacity disabled:opacity-40"
               aria-label="Senden"
             >

@@ -78,6 +78,22 @@ function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph
   const last = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const wantsSchedule = /termin|zeitplan|kalender|tagesplan|plan\b/i.test(last);
 
+  // A file was attached: acknowledge it and show a quick demo summary built
+  // from its first lines (the real summary comes with an OPENAI_API_KEY).
+  const fileMatch = last.match(/--- Angehängte Datei „(.+?)" ---\n([\s\S]*)$/);
+  if (fileMatch) {
+    const [, fileName, fileText] = fileMatch;
+    const lines = fileText.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 4);
+    return [
+      `Hier ist ${who}. Ich habe die Datei „${fileName}" erhalten und gelesen.`,
+      ``,
+      `**Kurzüberblick (Demo):**`,
+      ...(lines.length ? lines.map((l) => `- ${l.slice(0, 140)}`) : ["- (Kein lesbarer Textinhalt gefunden.)"]),
+      ``,
+      demoNote,
+    ].join("\n");
+  }
+
   if (graphs?.length) {
     const referenced =
       graphs.find((g) => last.toLowerCase().includes(g.title.toLowerCase())) ?? graphs[0];
