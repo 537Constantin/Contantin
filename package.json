@@ -5,16 +5,18 @@
   "description": "AI Workforce OS – the operating system for AI employees. Build autonomous AI agents that handle calls, scheduling, support, documents and consulting.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && node scripts/db-deploy.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.2",
+    "@prisma/client": "^6.19.3",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "motion": "^11.15.0",
@@ -31,6 +33,7 @@
     "@types/react-dom": "^19.0.3",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.1.6",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3"
   }

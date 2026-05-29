@@ -14,9 +14,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { employees } from "@/lib/data/employees";
 import { workflows as templates } from "@/lib/data/workflows";
 import {
-  loadUserWorkflows, saveUserWorkflows, stepTypeLabel, workflowToPrompt,
+  stepTypeLabel, workflowToPrompt,
   type UserWorkflow, type StepType,
 } from "@/lib/workflows-store";
+import { loadItems, saveItems } from "@/lib/store-sync";
 import type { WorkflowStep, WorkflowStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -64,11 +65,13 @@ export default function WorkflowsPage() {
   const [loaded, setLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    setSaved(loadUserWorkflows());
-    setLoaded(true);
+    void loadItems<UserWorkflow>("workflow").then((items) => {
+      setSaved(items);
+      setLoaded(true);
+    });
   }, []);
   React.useEffect(() => {
-    if (loaded) saveUserWorkflows(saved);
+    if (loaded) void saveItems("workflow", saved);
   }, [saved, loaded]);
 
   const validSteps = steps.filter((s) => s.label.trim());

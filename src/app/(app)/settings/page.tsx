@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { User, Cpu, CreditCard, Bell, Shield, Check, Loader2 } from "lucide-react";
+import { User, Cpu, CreditCard, Bell, Shield, Check, Loader2, Database } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,20 +74,65 @@ function Field({ label, value, hint }: { label: string; value: string; hint?: st
 
 function GeneralTab() {
   return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Workspace</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Field label="Unternehmensname" value="Constantin GmbH" />
+          <Field label="Domain" value="constantin.workforce-os.app" hint="Wird für Team-Einladungen verwendet." />
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Zeitzone" value="Europe/Berlin" />
+            <Field label="Sprache" value="Deutsch" />
+          </div>
+          <div className="flex justify-end">
+            <Button variant="accent" size="sm"><Check className="h-4 w-4" /> Speichern</Button>
+          </div>
+        </CardContent>
+      </Card>
+      <DatabaseCard />
+    </div>
+  );
+}
+
+function DatabaseCard() {
+  const [status, setStatus] = React.useState<{ configured: boolean; connected: boolean } | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/db/status")
+      .then((r) => r.json())
+      .then((d) => setStatus({ configured: Boolean(d.configured), connected: Boolean(d.connected) }))
+      .catch(() => setStatus({ configured: false, connected: false }));
+  }, []);
+
+  const state =
+    status === null ? "loading" : status.connected ? "ok" : status.configured ? "error" : "off";
+
+  return (
     <Card>
       <CardHeader>
-        <CardTitle>Workspace</CardTitle>
+        <CardTitle>
+          <span className="inline-flex items-center gap-2"><Database className="h-4 w-4 text-muted" /> Datenbank &amp; Speicher</span>
+        </CardTitle>
+        <Badge variant={state === "ok" ? "success" : state === "error" ? "warning" : "default"}>
+          {state === "loading" ? "…" : state === "ok" ? "Verbunden" : state === "error" ? "Nicht erreichbar" : "Demo (nur lokal)"}
+        </Badge>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Field label="Unternehmensname" value="Constantin GmbH" />
-        <Field label="Domain" value="constantin.workforce-os.app" hint="Wird für Team-Einladungen verwendet." />
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Zeitzone" value="Europe/Berlin" />
-          <Field label="Sprache" value="Deutsch" />
-        </div>
-        <div className="flex justify-end">
-          <Button variant="accent" size="sm"><Check className="h-4 w-4" /> Speichern</Button>
-        </div>
+      <CardContent className="space-y-2 text-sm text-ink-soft">
+        {state === "ok" && (
+          <p>Workflows, Dokumente und Diagramme werden dauerhaft in der Datenbank gespeichert – auch geräteübergreifend.</p>
+        )}
+        {(state === "off" || state === "loading") && (
+          <p>
+            Deine Daten liegen aktuell nur in diesem Browser. Setze <code className="rounded bg-surface-soft px-1.5 py-0.5 text-xs">DATABASE_URL</code> (z. B. kostenloses Vercel Postgres / Neon), um sie dauerhaft und geräteübergreifend zu speichern.
+          </p>
+        )}
+        {state === "error" && (
+          <p className="text-warning">
+            <code className="rounded bg-surface-soft px-1.5 py-0.5 text-xs">DATABASE_URL</code> ist gesetzt, aber die Datenbank ist nicht erreichbar. Bis dahin nutzt die App weiter den lokalen Speicher.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

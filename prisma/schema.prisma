@@ -1,6 +1,10 @@
 // AI Workforce OS — Prisma schema
-// Mirrors src/lib/types.ts. Swap the in-memory data layer in src/lib/data/*
-// for these models once a PostgreSQL instance is connected.
+//
+// Generic persistence for the objects users create (workflows, documents,
+// graphs). Each row stores the object exactly as the app already uses it, as
+// JSON — so the client's localStorage shapes and the database stay in sync with
+// no field-by-field mapping. This keeps the database layer small and safe to
+// enable incrementally; a richer normalized model can come later.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,175 +15,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ----------------------------------------------------------------------------
-// Tenancy & users
-// ----------------------------------------------------------------------------
-
-model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  plan      Plan     @default(STARTER)
+model StoreItem {
+  id        String   @id
+  scope     String   @default("default")
+  kind      String
+  data      Json
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  members   Membership[]
-  employees AIEmployee[]
-  workflows Workflow[]
-  documents Document[]
-  calls     CallRecord[]
+  @@index([scope, kind])
 }
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  avatarColor String @default("#7c6dff")
-  createdAt DateTime @default(now())
-
-  memberships Membership[]
-}
-
-model Membership {
-  id          String    @id @default(cuid())
-  role        TeamRole  @default(MEMBER)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  lastActive  DateTime  @default(now())
-
-  @@unique([workspaceId, userId])
-}
-
-// ----------------------------------------------------------------------------
-// AI employees
-// ----------------------------------------------------------------------------
-
-model AIEmployee {
-  id          String         @id @default(cuid())
-  name        String
-  role        EmployeeRole
-  status      EmployeeStatus @default(IDLE)
-  personality Personality    @default(PROFESSIONAL)
-  description String
-  avatarColor String         @default("#7c6dff")
-  model       String         @default("gpt-4o-mini")
-  skills      String[]
-  tools       String[]
-  performance Int            @default(70)
-  createdAt   DateTime       @default(now())
-
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  tasks       Task[]
-  activity    ActivityEvent[]
-  calls       CallRecord[]
-  messages    Message[]
-}
-
-model Task {
-  id         String       @id @default(cuid())
-  title      String
-  priority   TaskPriority @default(MEDIUM)
-  state      TaskState    @default(TODO)
-  due        DateTime?
-  createdAt  DateTime     @default(now())
-
-  employee   AIEmployee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  employeeId String
-}
-
-model ActivityEvent {
-  id         String       @id @default(cuid())
-  kind       ActivityKind
-  title      String
-  detail     String
-  at         DateTime     @default(now())
-
-  employee   AIEmployee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  employeeId String
-}
-
-// ----------------------------------------------------------------------------
-// Workflows, documents, telephony, chat
-// ----------------------------------------------------------------------------
-
-model Workflow {
-  id          String         @id @default(cuid())
-  name        String
-  description String
-  status      WorkflowStatus @default(DRAFT)
-  runs        Int            @default(0)
-  successRate Int            @default(0)
-  steps       Json
-  updatedAt   DateTime       @updatedAt
-
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-}
-
-model Document {
-  id         String     @id @default(cuid())
-  name       String
-  type       String
-  category   String
-  sizeKb     Int
-  status     DocStatus  @default(PROCESSING)
-  summary    String     @default("")
-  tags       String[]
-  owner      String
-  uploadedAt DateTime   @default(now())
-
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-}
-
-model CallRecord {
-  id          String      @id @default(cuid())
-  caller      String
-  durationSec Int
-  outcome     CallOutcome
-  sentiment   Sentiment
-  summary     String
-  at          DateTime    @default(now())
-
-  employee    AIEmployee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  employeeId  String
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-}
-
-model Conversation {
-  id        String    @id @default(cuid())
-  title     String    @default("Neuer Chat")
-  createdAt DateTime  @default(now())
-  messages  Message[]
-}
-
-model Message {
-  id             String       @id @default(cuid())
-  role           String
-  content        String
-  createdAt      DateTime     @default(now())
-
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId String
-  employee       AIEmployee?  @relation(fields: [employeeId], references: [id])
-  employeeId     String?
-}
-
-// ----------------------------------------------------------------------------
-// Enums
-// ----------------------------------------------------------------------------
-
-enum Plan { STARTER GROWTH ENTERPRISE }
-enum TeamRole { OWNER ADMIN MEMBER VIEWER }
-enum EmployeeRole { SECRETARY CONSULTANT SUPPORT SALES MANAGER ANALYST }
-enum EmployeeStatus { ACTIVE IDLE TRAINING OFFLINE }
-enum Personality { PROFESSIONAL FRIENDLY CONCISE EMPATHETIC VISIONARY }
-enum TaskPriority { LOW MEDIUM HIGH URGENT }
-enum TaskState { TODO IN_PROGRESS REVIEW DONE }
-enum ActivityKind { CALL EMAIL MEETING DOCUMENT TASK WORKFLOW INSIGHT }
-enum WorkflowStatus { LIVE PAUSED DRAFT }
-enum DocStatus { PROCESSED PROCESSING NEEDS_REVIEW }
-enum CallOutcome { RESOLVED SCHEDULED FORWARDED VOICEMAIL }
-enum Sentiment { POSITIVE NEUTRAL NEGATIVE }
