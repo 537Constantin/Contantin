@@ -152,9 +152,11 @@ export function AreaChart({
 export function Donut({
   data,
   className,
+  unit = "%",
 }: {
   data: { label: string; value: number; color: string }[];
   className?: string;
+  unit?: string;
 }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   const r = 60;
@@ -189,10 +191,44 @@ export function Donut({
             <li key={d.label} className="flex items-center gap-2 text-ink-soft">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
               <span className="flex-1">{d.label}</span>
-              <span className="font-medium text-ink">{d.value}%</span>
+              <span className="font-medium text-ink">{d.value}{unit}</span>
             </li>
           ))}
         </ul>
+      </div>
+    </div>
+  );
+}
+
+/** Generic single-series bar chart for user-built graphs. */
+export function SimpleBarChart({
+  data,
+  className,
+}: {
+  data: { label: string; value: number }[];
+  className?: string;
+}) {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return (
+    <div className={className}>
+      <div className="flex h-60 items-end justify-between gap-2">
+        {data.map((d, i) => (
+          <div key={i} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+            <span className="text-xs font-semibold text-ink">{d.value}</span>
+            <div
+              className="w-full max-w-[48px] rounded-t-md transition-[height] duration-500 [transition-timing-function:var(--ease-lux)]"
+              style={{
+                height: `${Math.max(2, (d.value / max) * 190)}px`,
+                background:
+                  "linear-gradient(180deg, var(--color-ink), color-mix(in srgb, var(--color-ink) 45%, transparent))",
+              }}
+              title={`${d.label}: ${d.value}`}
+            />
+            <span className="w-full truncate text-center text-xs text-muted" title={d.label}>
+              {d.label}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

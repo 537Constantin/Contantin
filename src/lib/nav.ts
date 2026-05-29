@@ -6,6 +6,7 @@ import {
   FileText,
   Phone,
   BarChart3,
+  LineChart,
   UsersRound,
   Settings,
   type LucideIcon,
@@ -44,6 +45,7 @@ export const navGroups: NavGroup[] = [
     label: "Intelligenz",
     items: [
       { label: "Analytics & Beratung", href: "/analytics", icon: BarChart3 },
+      { label: "Diagramme", href: "/charts", icon: LineChart },
     ],
   },
   {
