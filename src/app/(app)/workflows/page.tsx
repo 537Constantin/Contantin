@@ -38,10 +38,12 @@ const rid = () => Math.random().toString(36).slice(2, 9);
 
 interface DraftStep extends WorkflowStep {}
 
+// Stable IDs so the server-prerendered HTML and the client hydration match
+// exactly (no random values during the initial render).
 const starterSteps = (): DraftStep[] => [
-  { id: rid(), type: "trigger", label: "Neue E-Mail im Postfach", detail: "Auslöser" },
-  { id: rid(), type: "ai", label: "Inhalt zusammenfassen", detail: "KI extrahiert Kernpunkte" },
-  { id: rid(), type: "action", label: "Zusammenfassung senden", detail: "Per E-Mail an dich" },
+  { id: "starter-1", type: "trigger", label: "Neue E-Mail im Postfach", detail: "Auslöser" },
+  { id: "starter-2", type: "ai", label: "Inhalt zusammenfassen", detail: "KI extrahiert Kernpunkte" },
+  { id: "starter-3", type: "action", label: "Zusammenfassung senden", detail: "Per E-Mail an dich" },
 ];
 
 export default function WorkflowsPage() {
@@ -53,6 +55,9 @@ export default function WorkflowsPage() {
   const [employeeId, setEmployeeId] = React.useState(employees[0].id);
   const [steps, setSteps] = React.useState<DraftStep[]>(starterSteps);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [justSaved, setJustSaved] = React.useState(false);
+  const nameRef = React.useRef<HTMLInputElement>(null);
 
   // Saved workflows
   const [saved, setSaved] = React.useState<UserWorkflow[]>([]);
@@ -67,7 +72,6 @@ export default function WorkflowsPage() {
   }, [saved, loaded]);
 
   const validSteps = steps.filter((s) => s.label.trim());
-  const canSave = name.trim().length > 0 && validSteps.length >= 1;
   const employee = employees.find((e) => e.id === employeeId) ?? employees[0];
 
   const updateStep = (id: string, patch: Partial<DraftStep>) =>
@@ -92,10 +96,22 @@ export default function WorkflowsPage() {
     setEmployeeId(employees[0].id);
     setSteps(starterSteps());
     setEditingId(null);
+    setError(null);
   }
 
   function save() {
-    if (!canSave) return;
+    // Validate on click (instead of silently disabling the button) so it is
+    // always clear *why* a workflow can't be saved yet.
+    if (name.trim().length === 0) {
+      setError("Bitte gib deinem Workflow zuerst oben einen Namen.");
+      nameRef.current?.focus();
+      return;
+    }
+    if (validSteps.length === 0) {
+      setError("Füge mindestens einen Schritt mit einer Beschreibung hinzu.");
+      return;
+    }
+    setError(null);
     const now = new Date().toISOString();
     const cleanSteps = validSteps.map((s) => ({
       id: s.id,
@@ -126,9 +142,13 @@ export default function WorkflowsPage() {
       setSaved((list) => [wf, ...list]);
     }
     resetBuilder();
+    setJustSaved(true);
+    window.setTimeout(() => setJustSaved(false), 4000);
   }
 
   function editWorkflow(wf: UserWorkflow) {
+    setError(null);
+    setJustSaved(false);
     setEditingId(wf.id);
     setName(wf.name);
     setDescription(wf.description);
@@ -138,6 +158,8 @@ export default function WorkflowsPage() {
   }
 
   function applyTemplate(t: (typeof templates)[number]) {
+    setError(null);
+    setJustSaved(false);
     setEditingId(null);
     setName(t.name);
     setDescription(t.description);
@@ -187,12 +209,23 @@ export default function WorkflowsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink">Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink">
+                Name <span className="text-danger">*</span>
+              </label>
               <input
+                ref={nameRef}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (error) setError(null);
+                }}
                 placeholder="z. B. Posteingang automatisch sortieren"
-                className="h-11 w-full rounded-xl border border-border bg-surface-soft/50 px-3.5 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none"
+                className={cn(
+                  "h-11 w-full rounded-xl border bg-surface-soft/50 px-3.5 text-sm text-ink placeholder:text-muted focus:bg-surface focus:outline-none",
+                  error && !name.trim()
+                    ? "border-danger focus:border-danger"
+                    : "border-border focus:border-accent/40",
+                )}
               />
             </div>
 
@@ -288,11 +321,19 @@ export default function WorkflowsPage() {
               </button>
             </div>
 
+            {error && (
+              <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm font-medium text-danger">{error}</p>
+            )}
+            {justSaved && (
+              <p className="rounded-lg bg-success/10 px-3 py-2 text-sm font-medium text-success">
+                Gespeichert ✓ – du findest den Workflow unten unter „Meine Workflows“.
+              </p>
+            )}
             <div className="flex justify-end gap-2">
               {editingId && (
                 <Button variant="ghost" size="sm" onClick={resetBuilder}>Abbrechen</Button>
               )}
-              <Button variant="accent" size="sm" onClick={save} disabled={!canSave}>
+              <Button variant="accent" size="sm" onClick={save}>
                 <Save className="h-4 w-4" /> {editingId ? "Änderungen speichern" : "Workflow speichern"}
               </Button>
             </div>
