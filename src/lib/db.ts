@@ -7,12 +7,21 @@
  */
 import { PrismaClient } from "@prisma/client";
 
-export const dbEnabled = Boolean(process.env.DATABASE_URL);
+// Accept whichever name the host injects (Neon uses DATABASE_URL, Vercel
+// Postgres uses POSTGRES_PRISMA_URL, etc.) so setup "just works".
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL_UNPOOLED ||
+  "";
+
+export const dbEnabled = Boolean(databaseUrl);
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const db: PrismaClient | null = dbEnabled
-  ? globalForPrisma.prisma ?? new PrismaClient()
+  ? globalForPrisma.prisma ?? new PrismaClient({ datasourceUrl: databaseUrl })
   : null;
 
 // Reuse the instance across hot reloads / serverless invocations in dev.
