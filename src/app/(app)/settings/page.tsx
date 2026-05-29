@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { User, Cpu, CreditCard, Bell, Shield, Check } from "lucide-react";
+import { User, Cpu, CreditCard, Bell, Shield, Check, Loader2 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CheckoutButton } from "@/components/billing/checkout-button";
+import { plans, getPlan, loadCurrentPlanId, isPurchasable, type PlanId } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -133,39 +135,105 @@ function AiTab() {
 }
 
 function BillingTab() {
-  const plans = [
-    { name: "Starter", price: "49 €", agents: "3 Agenten", current: false },
-    { name: "Growth", price: "199 €", agents: "10 Agenten", current: false },
-    { name: "Enterprise", price: "Individuell", agents: "Unbegrenzt", current: true },
-  ];
+  const [live, setLive] = React.useState<boolean | null>(null);
+  const [currentId, setCurrentId] = React.useState<PlanId>("growth");
+  const [portalMsg, setPortalMsg] = React.useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    setCurrentId(loadCurrentPlanId() ?? "growth");
+    fetch("/api/billing/status")
+      .then((r) => r.json())
+      .then((d) => setLive(Boolean(d.live)))
+      .catch(() => setLive(false));
+  }, []);
+
+  const current = getPlan(currentId) ?? plans[1];
+
+  async function manageSubscription() {
+    setPortalLoading(true);
+    setPortalMsg(null);
+    try {
+      const res = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { url?: string; message?: string; error?: string }
+        | null;
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setPortalMsg(data?.message ?? data?.error ?? "Abo-Verwaltung derzeit nicht verfügbar.");
+    } catch {
+      setPortalMsg("Netzwerkfehler – bitte erneut versuchen.");
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Aktueller Plan</CardTitle>
-          <Badge variant="accent">Enterprise</Badge>
+          <Badge variant={live ? "success" : "warning"}>
+            {live === null ? "…" : live ? "Live-Zahlungen" : "Demo-Modus"}
+          </Badge>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted">Nächste Abrechnung am 1. Juni 2026 · Zahlung über Stripe</p>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-soft">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="font-display text-2xl font-bold text-ink">{current.name}</p>
+              <p className="mt-0.5 text-sm text-muted">
+                {current.priceLabel}
+                {current.price != null && " / Monat"} · {current.agents}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={manageSubscription} disabled={portalLoading}>
+              {portalLoading && <Loader2 className="h-4 w-4 animate-spin" />} Abo verwalten
+            </Button>
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-soft">
             <div className="h-full w-[64%] rounded-full bg-[linear-gradient(90deg,var(--color-accent),var(--color-cyan))]" />
           </div>
           <p className="mt-2 text-xs text-muted">6.402 von 10.000 KI-Aktionen diesen Monat verbraucht</p>
+          {portalMsg && (
+            <p className="mt-3 rounded-lg bg-surface-soft/60 p-2.5 text-xs text-muted">{portalMsg}</p>
+          )}
         </CardContent>
       </Card>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {plans.map((p) => (
-          <Card key={p.name} className={cn(p.current && "border-accent/40 ring-1 ring-accent/30")}>
-            <CardContent className="p-5">
-              <p className="font-display text-lg font-semibold text-ink">{p.name}</p>
-              <p className="mt-1 font-display text-2xl font-bold text-ink">{p.price}<span className="text-sm font-normal text-muted">/mo</span></p>
-              <p className="mt-1 text-sm text-muted">{p.agents}</p>
-              <Button variant={p.current ? "outline" : "accent"} size="sm" className="mt-4 w-full" disabled={p.current}>
-                {p.current ? "Aktueller Plan" : "Wechseln"}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+        {plans.map((p) => {
+          const isCurrent = p.id === currentId;
+          return (
+            <Card key={p.id} className={cn(isCurrent && "border-accent/40 ring-1 ring-accent/30")}>
+              <CardContent className="p-5">
+                <p className="font-display text-lg font-semibold text-ink">{p.name}</p>
+                <p className="mt-1 font-display text-2xl font-bold text-ink">
+                  {p.priceLabel}
+                  {p.price != null && <span className="text-sm font-normal text-muted">/mo</span>}
+                </p>
+                <p className="mt-1 text-sm text-muted">{p.agents}</p>
+                {isCurrent ? (
+                  <Button variant="outline" size="sm" className="mt-4 w-full" disabled>
+                    Aktueller Plan
+                  </Button>
+                ) : isPurchasable(p) ? (
+                  <CheckoutButton planId={p.id} variant="accent" size="sm" className="mt-4 w-full">
+                    Wechseln
+                  </CheckoutButton>
+                ) : (
+                  <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+                    <a href={p.contact}>Kontakt</a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
