@@ -18,12 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SimpleBarChart, AreaChart, Donut } from "@/components/app/charts";
 import {
-  loadGraphs,
-  saveGraphs,
   graphTypeLabel,
   type SavedGraph,
   type GraphType,
 } from "@/lib/graphs";
+import { loadItems, saveItems } from "@/lib/store-sync";
 import { cn } from "@/lib/utils";
 
 const donutPalette = [
@@ -66,12 +65,14 @@ export default function ChartsPage() {
   const [loaded, setLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    setSaved(loadGraphs());
-    setLoaded(true);
+    void loadItems<SavedGraph>("graph").then((items) => {
+      setSaved(items);
+      setLoaded(true);
+    });
   }, []);
 
   React.useEffect(() => {
-    if (loaded) saveGraphs(saved);
+    if (loaded) void saveItems("graph", saved);
   }, [saved, loaded]);
 
   const validData = rows

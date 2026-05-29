@@ -108,19 +108,33 @@ Prisma-Queries austauschbar – die UI hängt nur von den Typen in `lib/types.ts
 
 ---
 
-## 🗄️ Datenbank (optional, für Produktion)
+## 🗄️ Datenbank (optional)
 
-Das Repo enthält ein vollständiges Prisma-Schema. Sobald PostgreSQL bereitsteht:
+Workflows, Dokumente und Diagramme werden **standardmäßig im Browser**
+(localStorage) gespeichert – die App läuft also ganz ohne Datenbank. Sobald eine
+`DATABASE_URL` gesetzt ist, schaltet die App automatisch auf **dauerhafte,
+geräteübergreifende** Speicherung in PostgreSQL um (via Prisma). Ist die DB nicht
+erreichbar, fällt die App nahtlos wieder auf localStorage zurück.
+
+**Aktivieren (kostenlos):**
+
+1. Datenbank anlegen – z. B. **Vercel Postgres** (Vercel → Storage → Create) oder
+   **Neon** ([neon.tech](https://neon.tech)).
+2. Die Postgres-/Prisma-Verbindungs-URL als `DATABASE_URL` in Vercel
+   (Project → Settings → Environment Variables) bzw. in `.env` setzen.
+3. Neu deployen. Das Schema wird beim Build **automatisch** angewendet
+   (`prisma db push`), es ist kein manueller Schritt nötig.
+
+Der Verbindungsstatus ist unter **Einstellungen → Allgemein → „Datenbank &
+Speicher"** sichtbar. Lokal:
 
 ```bash
-npm i -D prisma && npm i @prisma/client
-# DATABASE_URL in .env setzen
-npm run db:push       # Schema in die DB pushen
+npm run db:push       # Schema manuell in die DB schreiben
 npm run db:studio     # Daten im Browser inspizieren
 ```
 
-Anschließend die Funktionen in `src/lib/data/*` durch Prisma-Queries ersetzen –
-die Komponenten bleiben unverändert.
+Persistiert wird über das generische `StoreItem`-Modell (`prisma/schema.prisma`)
+und die Route `/api/store`; der Client nutzt `src/lib/store-sync.ts`.
 
 ---
 

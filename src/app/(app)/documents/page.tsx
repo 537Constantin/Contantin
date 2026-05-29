@@ -14,9 +14,10 @@ import { documents as exampleDocs } from "@/lib/data/documents";
 import { formatRelativeTime, cn } from "@/lib/utils";
 import type { DocumentItem } from "@/lib/types";
 import {
-  loadUserDocuments, saveUserDocuments, fileToDocument, formatBytes,
+  fileToDocument, formatBytes,
   type UserDocument, type DocKind,
 } from "@/lib/files";
+import { loadItems, saveItems } from "@/lib/store-sync";
 
 const kindIcon: Record<DocKind, typeof FileText> = {
   text: FileText, pdf: FileText, docx: FileIcon, xlsx: FileSpreadsheet,
@@ -42,11 +43,13 @@ export default function DocumentsPage() {
   const [openId, setOpenId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setDocs(loadUserDocuments());
-    setLoaded(true);
+    void loadItems<UserDocument>("document").then((items) => {
+      setDocs(items);
+      setLoaded(true);
+    });
   }, []);
   React.useEffect(() => {
-    if (loaded) saveUserDocuments(docs);
+    if (loaded) void saveItems("document", docs);
   }, [docs, loaded]);
 
   async function onFiles(list: FileList | File[] | null) {
