@@ -8,7 +8,7 @@ import { StatusDot } from "@/components/app/status";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { employees } from "@/lib/data/employees";
 import { loadGraphs } from "@/lib/graphs";
-import { isTextFile, readTextFile, formatBytes, loadUserDocuments, MAX_TEXT_CHARS } from "@/lib/files";
+import { kindFromFile, readTextFile, extractTextFromFile, formatBytes, loadUserDocuments, MAX_TEXT_CHARS } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
 
@@ -135,7 +135,9 @@ function ChatView() {
     if (!file) return;
     setFileNote(null);
     const sizeKb = Math.max(1, Math.round(file.size / 1024));
-    if (isTextFile(file)) {
+    const kind = kindFromFile(file);
+
+    if (kind === "text") {
       try {
         const text = await readTextFile(file);
         setAttachment({ name: file.name, sizeKb, text: text.slice(0, MAX_TEXT_CHARS) });
@@ -145,10 +147,20 @@ function ChatView() {
       } catch {
         setFileNote("Diese Datei konnte nicht gelesen werden.");
       }
+    } else if (kind === "pdf" || kind === "docx") {
+      setFileNote("Lese Datei …");
+      const text = await extractTextFromFile(file);
+      if (text) {
+        setAttachment({ name: file.name, sizeKb, text });
+        setFileNote(null);
+      } else {
+        setAttachment({ name: file.name, sizeKb, text: null });
+        setFileNote("Konnte keinen Text lesen (evtl. gescanntes PDF oder zu groß). Datei ist als Referenz angehängt.");
+      }
     } else {
-      // Binary file: attach as a reference; automatic reading is text-only for now.
+      // Image / other: attach as a reference only.
       setAttachment({ name: file.name, sizeKb, text: null });
-      setFileNote("Angehängt. Automatisch lesen kann die KI aktuell Textdateien (.txt, .md, .csv, Code). PDF/Word/Bild folgt.");
+      setFileNote("Angehängt als Referenz. Automatisch lesen kann die KI Text-, PDF- und Word-Dateien; Bilder folgen.");
     }
   }
 

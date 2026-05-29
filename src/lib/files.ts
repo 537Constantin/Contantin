@@ -15,6 +15,10 @@ export type DocKind = "text" | "pdf" | "docx" | "xlsx" | "image" | "audio" | "ot
 /** Cap on how much text we keep / send to the model, to stay within context. */
 export const MAX_TEXT_CHARS = 20000;
 
+/** Files larger than this are not sent for server extraction (platform body
+ * limit ~4.5 MB); they are attached as a reference instead. */
+export const MAX_UPLOAD_FOR_EXTRACT = 4 * 1024 * 1024;
+
 const TEXT_EXTENSIONS = [
   "txt", "md", "markdown", "csv", "tsv", "json", "yaml", "yml", "xml", "html",
   "htm", "css", "js", "mjs", "ts", "jsx", "tsx", "py", "java", "c", "h", "cpp",
@@ -105,6 +109,24 @@ export function saveUserDocuments(list: UserDocument[]) {
   }
 }
 
+/** Extract text from a PDF/Word file via the server route. Returns null if the
+ * file is too large, unreadable (e.g. a scanned PDF) or the request fails. */
+export async function extractTextFromFile(file: File): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  if (file.size > MAX_UPLOAD_FOR_EXTRACT) return null;
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/extract", { method: "POST", body: form });
+    if (!res.ok) return null;
+    const json = (await res.json().catch(() => null)) as { text?: string } | null;
+    const text = typeof json?.text === "string" ? json.text.trim() : "";
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Read a File into a UserDocument, extracting text when possible. */
 export async function fileToDocument(file: File): Promise<UserDocument> {
   const kind = kindFromFile(file);
@@ -115,6 +137,8 @@ export async function fileToDocument(file: File): Promise<UserDocument> {
     } catch {
       text = null;
     }
+  } else if (kind === "pdf" || kind === "docx") {
+    text = await extractTextFromFile(file);
   }
   return {
     id: Math.random().toString(36).slice(2, 9),
