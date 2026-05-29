@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/app/status";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { employees } from "@/lib/data/employees";
+import { loadGraphs } from "@/lib/graphs";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
 
@@ -42,6 +43,18 @@ function ChatView() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streaming]);
 
+  // Auto-send a prompt passed from another page (e.g. "In Terminplan umwandeln").
+  const didInit = React.useRef(false);
+  React.useEffect(() => {
+    if (didInit.current) return;
+    const prompt = params.get("prompt");
+    if (prompt) {
+      didInit.current = true;
+      void send(prompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
+
   async function send(text: string) {
     const content = text.trim();
     if (!content || streaming) return;
@@ -62,6 +75,7 @@ function ChatView() {
         body: JSON.stringify({
           agentId,
           messages: history.map((m) => ({ role: m.role, content: m.content })),
+          graphs: loadGraphs(),
         }),
         signal: controller.signal,
       });
