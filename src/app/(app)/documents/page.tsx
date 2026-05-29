@@ -83,7 +83,7 @@ export default function DocumentsPage() {
     <PageShell>
       <PageHeader
         title="Dokumente"
-        description="Lade Dateien hoch – Textdateien (.txt, .md, .csv, Code …) liest deine KI direkt und fasst sie zusammen."
+        description="Lade Dateien hoch – Text-, PDF- und Word-Dateien liest deine KI direkt aus und fasst sie zusammen."
       >
         <Button variant="accent" size="sm" onClick={() => fileInputRef.current?.click()}>
           <Upload className="h-4 w-4" /> Hochladen
@@ -116,7 +116,7 @@ export default function DocumentsPage() {
           {busy ? "Wird eingelesen…" : "Dateien hierher ziehen oder klicken"}
         </p>
         <p className="text-xs text-muted">
-          Alle Dateitypen · Textdateien werden direkt gelesen · PDF/Word/Bild folgen als Referenz
+          Alle Dateitypen · Text, PDF &amp; Word werden ausgelesen · Bilder als Referenz
         </p>
       </div>
 
@@ -180,7 +180,9 @@ export default function DocumentsPage() {
                         </p>
                       ) : (
                         <p className="mt-2.5 rounded-xl bg-surface-soft/50 p-2.5 text-[13px] leading-relaxed text-muted">
-                          Binärdatei – als Referenz gespeichert. Automatisches Lesen von {kindLabel[doc.kind]}-Dateien folgt.
+                          {doc.kind === "image" || doc.kind === "audio"
+                            ? `${kindLabel[doc.kind]} – als Referenz gespeichert. Inhalt automatisch lesen folgt.`
+                            : "Kein Text gefunden (evtl. gescanntes Dokument) – als Referenz gespeichert."}
                         </p>
                       )}
 
