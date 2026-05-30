@@ -5,7 +5,10 @@ const clerkEnabled = Boolean(
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
 );
 
-// Everything inside the (app) route group requires a signed-in user.
+// Everything inside the (app) route group requires a signed-in user — plus the
+// API routes that read or write user data. (Billing routes stay open: the
+// Stripe webhook is server-to-server, and checkout works from public pricing.
+// Status routes expose nothing sensitive.)
 const isProtected = createRouteMatcher([
   "/dashboard(.*)",
   "/employees(.*)",
@@ -16,6 +19,9 @@ const isProtected = createRouteMatcher([
   "/analytics(.*)",
   "/team(.*)",
   "/settings(.*)",
+  "/api/chat(.*)",
+  "/api/store(.*)",
+  "/api/extract(.*)",
 ]);
 
 export default clerkEnabled
