@@ -39,7 +39,10 @@ function writeLocal<T>(kind: StoreKind, items: T[]) {
   }
 }
 
-const migratedFlag = (kind: StoreKind) => `workforce-os:migrated:${kind}`;
+// Bumped to v2 when storage became per-user: this makes the one-time migration
+// re-run once, lifting any data cached locally under the old shared scope into
+// the signed-in user's own scope (so nothing appears to vanish on upgrade).
+const migratedFlag = (kind: StoreKind) => `workforce-os:migrated:v2:${kind}`;
 
 async function pushItems<T>(kind: StoreKind, items: T[]): Promise<boolean> {
   try {
@@ -87,4 +90,22 @@ export async function saveItems<T extends { id: string }>(kind: StoreKind, items
   writeLocal(kind, items); // always keep the local cache current
   if (enabledCache === false) return; // database off -> localStorage only
   void pushItems(kind, items);
+}
+
+/**
+ * Wipe all locally cached user data + migration flags. Called when the signed-in
+ * user changes (incl. sign-out) so one account's cached workflows/documents/
+ * graphs can never flash for the next person on a shared device.
+ */
+export function clearLocalStoreCaches() {
+  if (typeof window === "undefined") return;
+  enabledCache = null;
+  for (const kind of Object.keys(LOCAL_KEY) as StoreKind[]) {
+    try {
+      window.localStorage.removeItem(LOCAL_KEY[kind]);
+      window.localStorage.removeItem(migratedFlag(kind));
+    } catch {
+      /* ignore */
+    }
+  }
 }

@@ -4,21 +4,21 @@
  * - GET  /api/store?kind=workflow      -> { enabled, items }
  * - POST /api/store { kind, items }    -> replaces all items of that kind
  *
- * When no database is configured (or it is unreachable) every response reports
- * `enabled: false`, and the client transparently falls back to localStorage.
- * The client always sends the full list for a kind, so deletions propagate
- * without a separate endpoint.
+ * Data is scoped per signed-in user (via Clerk), so every account only ever
+ * sees its own workflows/documents/graphs. Without auth configured the app
+ * uses a single shared scope (demo mode). When no database is configured (or it
+ * is unreachable) every response reports `enabled: false`, and the client
+ * transparently falls back to localStorage. The client always sends the full
+ * list for a kind, so deletions propagate without a separate endpoint.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db, dbEnabled } from "@/lib/db";
+import { clerkEnabled } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Single shared scope for now. Per-user scoping can be added once auth is
-// mandatory (map this to the authenticated user / workspace id).
-const SCOPE = "default";
 const ALLOWED = new Set(["workflow", "document", "graph"]);
 
 interface Item {
@@ -27,13 +27,35 @@ interface Item {
   [key: string]: unknown;
 }
 
+/**
+ * The storage bucket for the current request.
+ * - auth on  -> "user:<id>" (each account isolated)
+ * - auth off -> "default"  (demo mode, single shared bucket)
+ * Returns null when auth is on but no user is present (defense in depth; the
+ * middleware already blocks unauthenticated requests to this route).
+ */
+async function resolveScope(): Promise<string | null> {
+  if (!clerkEnabled) return "default";
+  try {
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
+    return userId ? `user:${userId}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest) {
   const kind = req.nextUrl.searchParams.get("kind") ?? "";
   if (!dbEnabled || !db) return NextResponse.json({ enabled: false, items: [] });
   if (!ALLOWED.has(kind)) return NextResponse.json({ enabled: true, items: [] });
+
+  const scope = await resolveScope();
+  if (!scope) return NextResponse.json({ enabled: true, items: [] });
+
   try {
     const rows = await db.storeItem.findMany({
-      where: { scope: SCOPE, kind },
+      where: { scope, kind },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ enabled: true, items: rows.map((r) => r.data) });
@@ -45,6 +67,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   if (!dbEnabled || !db) return NextResponse.json({ enabled: false });
+
+  const scope = await resolveScope();
+  if (!scope) return NextResponse.json({ enabled: true, ok: false });
 
   let body: { kind?: string; items?: Item[] };
   try {
@@ -62,12 +87,14 @@ export async function POST(req: NextRequest) {
   const valid = items.filter((it) => it && typeof it.id === "string");
   try {
     await db.$transaction([
-      db.storeItem.deleteMany({ where: { scope: SCOPE, kind } }),
+      db.storeItem.deleteMany({ where: { scope, kind } }),
       ...valid.map((it) =>
         db!.storeItem.create({
           data: {
-            id: `${kind}:${it.id}`, // namespaced so ids never clash across kinds
-            scope: SCOPE,
+            // Primary key includes the scope so two users can keep items with
+            // the same (random) client id without colliding.
+            id: `${scope}:${kind}:${it.id}`,
+            scope,
             kind,
             data: it as unknown as Prisma.InputJsonValue,
             createdAt: it.createdAt ? new Date(it.createdAt) : new Date(),
