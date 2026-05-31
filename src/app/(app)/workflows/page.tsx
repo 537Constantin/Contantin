@@ -4,7 +4,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Zap, GitBranch, Bot, Play, Trash2, Save, ArrowRight, ArrowUp, ArrowDown,
-  Sparkles, LayoutTemplate, Pause, FileEdit,
+  Sparkles, LayoutTemplate, Pause, FileEdit, Clock, MousePointerClick, Webhook,
+  Loader2, History, CheckCircle2, AlertCircle, Mail,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +15,20 @@ import { Avatar } from "@/components/ui/avatar";
 import { employees } from "@/lib/data/employees";
 import { workflows as templates } from "@/lib/data/workflows";
 import {
-  stepTypeLabel, workflowToPrompt,
-  type UserWorkflow, type StepType,
+  stepTypeLabel, workflowToPrompt, triggerLabel, scheduleLabel, defaultTrigger,
+  type UserWorkflow, type StepType, type WorkflowTrigger, type TriggerType,
+  type Schedule, type WorkflowRun,
 } from "@/lib/workflows-store";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import type { WorkflowStep, WorkflowStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
+
+const rid = () => Math.random().toString(36).slice(2, 9);
+const triggerIcon: Record<TriggerType, typeof Clock> = {
+  manual: MousePointerClick,
+  schedule: Clock,
+  event: Webhook,
+};
 
 const stepMeta: Record<StepType, { icon: typeof Zap; color: string }> = {
   trigger: { icon: Zap, color: "var(--color-warning)" },
@@ -35,7 +44,6 @@ const statusMeta: Record<WorkflowStatus, { label: string; variant: "success" | "
 };
 
 const stepOrder: StepType[] = ["trigger", "ai", "action", "condition"];
-const rid = () => Math.random().toString(36).slice(2, 9);
 
 interface DraftStep extends WorkflowStep {}
 
@@ -58,21 +66,32 @@ export default function WorkflowsPage() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [justSaved, setJustSaved] = React.useState(false);
+  const [trigger, setTrigger] = React.useState<WorkflowTrigger>(defaultTrigger);
   const nameRef = React.useRef<HTMLInputElement>(null);
 
-  // Saved workflows
+  // Saved workflows + run history
   const [saved, setSaved] = React.useState<UserWorkflow[]>([]);
+  const [runs, setRuns] = React.useState<WorkflowRun[]>([]);
   const [loaded, setLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    void loadItems<UserWorkflow>("workflow").then((items) => {
-      setSaved(items);
+    Promise.all([
+      loadItems<UserWorkflow>("workflow"),
+      loadItems<WorkflowRun>("run"),
+    ]).then(([wf, rs]) => {
+      setSaved(wf);
+      setRuns(rs);
       setLoaded(true);
     });
   }, []);
   React.useEffect(() => {
     if (loaded) void saveItems("workflow", saved);
   }, [saved, loaded]);
+  React.useEffect(() => {
+    if (loaded) void saveItems("run", runs);
+  }, [runs, loaded]);
+
+  const addRun = (run: WorkflowRun) => setRuns((prev) => [run, ...prev].slice(0, 50));
 
   const validSteps = steps.filter((s) => s.label.trim());
   const employee = employees.find((e) => e.id === employeeId) ?? employees[0];
@@ -98,6 +117,7 @@ export default function WorkflowsPage() {
     setDescription("");
     setEmployeeId(employees[0].id);
     setSteps(starterSteps());
+    setTrigger(defaultTrigger());
     setEditingId(null);
     setError(null);
   }
@@ -123,11 +143,15 @@ export default function WorkflowsPage() {
       detail: s.detail.trim() || stepTypeLabel[s.type],
     }));
 
+    // An event trigger needs a secret token so its webhook URL can't be guessed.
+    const finalTrigger: WorkflowTrigger =
+      trigger.type === "event" && !trigger.token ? { ...trigger, token: rid() + rid() } : trigger;
+
     if (editingId) {
       setSaved((list) =>
         list.map((w) =>
           w.id === editingId
-            ? { ...w, name: name.trim(), description: description.trim(), employeeId, steps: cleanSteps, updatedAt: now }
+            ? { ...w, name: name.trim(), description: description.trim(), employeeId, steps: cleanSteps, trigger: finalTrigger, updatedAt: now }
             : w,
         ),
       );
@@ -139,6 +163,7 @@ export default function WorkflowsPage() {
         employeeId,
         status: "draft",
         steps: cleanSteps,
+        trigger: finalTrigger,
         createdAt: now,
         updatedAt: now,
       };
@@ -157,6 +182,7 @@ export default function WorkflowsPage() {
     setDescription(wf.description);
     setEmployeeId(wf.employeeId);
     setSteps(wf.steps.map((s) => ({ ...s })));
+    setTrigger(wf.trigger ?? defaultTrigger());
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -168,6 +194,7 @@ export default function WorkflowsPage() {
     setDescription(t.description);
     setEmployeeId(employees[0].id);
     setSteps(t.steps.map((s) => ({ ...s, id: rid() })));
+    setTrigger(defaultTrigger());
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -190,11 +217,45 @@ export default function WorkflowsPage() {
     router.push(`/chat?agent=${encodeURIComponent(wf.employeeId)}&prompt=${encodeURIComponent(prompt)}`);
   }
 
+  const [runningId, setRunningId] = React.useState<string | null>(null);
+  async function runNow(wf: UserWorkflow) {
+    setRunningId(wf.id);
+    try {
+      const res = await fetch("/api/workflows/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workflow: wf }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; output?: string; emailSent?: boolean; error?: string }
+        | null;
+      const run: WorkflowRun = {
+        id: rid(),
+        workflowId: wf.id,
+        workflowName: wf.name,
+        status: data?.ok ? "success" : "error",
+        triggeredBy: "manual",
+        output: data?.ok ? data.output ?? "" : data?.error ?? "Ausführung fehlgeschlagen.",
+        emailSent: data?.emailSent,
+        createdAt: new Date().toISOString(),
+      };
+      addRun(run);
+    } catch {
+      addRun({
+        id: rid(), workflowId: wf.id, workflowName: wf.name, status: "error",
+        triggeredBy: "manual", output: "Netzwerkfehler – bitte erneut versuchen.",
+        createdAt: new Date().toISOString(),
+      });
+    } finally {
+      setRunningId(null);
+    }
+  }
+
   return (
     <PageShell>
       <PageHeader
         title="Workflows"
-        description="Baue eigene Abläufe für deine KI-Mitarbeiter – Auslöser, KI-Schritte, Aktionen und Bedingungen. Lass sie testweise im Chat durchspielen."
+        description="Baue Abläufe für deine KI-Mitarbeiter und lass sie wirklich ausführen – auf Knopfdruck, nach Zeitplan oder bei einem Ereignis."
       >
         {editingId && (
           <Button variant="ghost" size="sm" onClick={resetBuilder}>
@@ -324,6 +385,8 @@ export default function WorkflowsPage() {
               </button>
             </div>
 
+            <TriggerEditor trigger={trigger} onChange={setTrigger} />
+
             {error && (
               <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm font-medium text-danger">{error}</p>
             )}
@@ -408,8 +471,12 @@ export default function WorkflowsPage() {
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <Button variant="accent" size="sm" onClick={() => runInChat(wf)}>
-                        <Sparkles className="h-4 w-4" /> Im Chat ausführen
+                      <Button variant="accent" size="sm" onClick={() => runNow(wf)} disabled={runningId === wf.id}>
+                        {runningId === wf.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                        Jetzt ausführen
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => runInChat(wf)}>
+                        <Sparkles className="h-4 w-4" /> Im Chat
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => toggleStatus(wf.id)}>
                         {wf.status === "live" ? "Pausieren" : "Aktivieren"}
@@ -420,11 +487,16 @@ export default function WorkflowsPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="mt-5 flex flex-wrap items-center gap-2 overflow-x-auto rounded-xl border border-border bg-surface-soft/40 p-3">
+
+                  <TriggerSummary wf={wf} />
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2 overflow-x-auto rounded-xl border border-border bg-surface-soft/40 p-3">
                     {wf.steps.map((step, i) => (
                       <ChainStep key={step.id} step={step} last={i === wf.steps.length - 1} />
                     ))}
                   </div>
+
+                  <RunHistory runs={runs.filter((r) => r.workflowId === wf.id)} />
                 </CardContent>
               </Card>
             );
@@ -501,6 +573,148 @@ function ChainStep({ step, last }: { step: WorkflowStep; last: boolean }) {
         </div>
       </div>
       {!last && <ArrowRight className="h-4 w-4 shrink-0 text-muted" />}
+    </div>
+  );
+}
+
+const triggerTypes: TriggerType[] = ["manual", "schedule", "event"];
+const schedules: Schedule[] = ["hourly", "daily", "weekly"];
+
+/** Builder section: choose when/how the workflow runs. */
+function TriggerEditor({ trigger, onChange }: { trigger: WorkflowTrigger; onChange: (t: WorkflowTrigger) => void }) {
+  return (
+    <div className="rounded-xl border border-border bg-surface-soft/30 p-3">
+      <label className="mb-2 block text-sm font-medium text-ink">Wann soll der Workflow laufen?</label>
+      <div className="grid grid-cols-3 gap-2">
+        {triggerTypes.map((t) => {
+          const Icon = triggerIcon[t];
+          return (
+            <button
+              key={t}
+              onClick={() => onChange({ ...trigger, type: t })}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-center text-xs transition-all",
+                trigger.type === t ? "border-accent/60 bg-accent/8 text-ink" : "border-border text-ink-soft hover:border-accent/30",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {t === "manual" ? "Knopfdruck" : t === "schedule" ? "Zeitplan" : "Ereignis"}
+            </button>
+          );
+        })}
+      </div>
+
+      {trigger.type === "schedule" && (
+        <div className="mt-3">
+          <label className="mb-1.5 block text-xs font-medium text-muted">Wie oft?</label>
+          <select
+            value={trigger.schedule ?? "daily"}
+            onChange={(e) => onChange({ ...trigger, schedule: e.target.value as Schedule })}
+            className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-ink focus:border-accent/40 focus:outline-none"
+          >
+            {schedules.map((s) => <option key={s} value={s}>{scheduleLabel[s]}</option>)}
+          </select>
+        </div>
+      )}
+
+      {trigger.type === "event" && (
+        <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-xs text-muted">
+          Dieser Workflow wird ausgelöst, wenn ein externer Dienst (z. B. eingehende E-Mail) ihn aufruft. Die persönliche Webhook-Adresse erscheint nach dem Speichern unten am Workflow.
+        </p>
+      )}
+
+      <div className="mt-3">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted">
+          <Mail className="h-3.5 w-3.5" /> Ergebnis per E-Mail an (optional)
+        </label>
+        <input
+          value={trigger.notifyEmail ?? ""}
+          onChange={(e) => onChange({ ...trigger, notifyEmail: e.target.value })}
+          placeholder="name@firma.de"
+          inputMode="email"
+          className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Small line on a saved workflow describing its trigger + webhook URL. */
+function TriggerSummary({ wf }: { wf: UserWorkflow }) {
+  const trigger = wf.trigger ?? { type: "manual" as TriggerType };
+  const Icon = triggerIcon[trigger.type];
+  const [copied, setCopied] = React.useState(false);
+
+  const webhookUrl =
+    trigger.type === "event" && trigger.token && typeof window !== "undefined"
+      ? `${window.location.origin}/api/workflows/event`
+      : "";
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft px-2.5 py-1 font-medium text-ink-soft">
+          <Icon className="h-3.5 w-3.5" />
+          {triggerLabel[trigger.type]}
+          {trigger.type === "schedule" && trigger.schedule ? ` · ${scheduleLabel[trigger.schedule]}` : ""}
+        </span>
+        {trigger.notifyEmail && (
+          <span className="inline-flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {trigger.notifyEmail}</span>
+        )}
+      </div>
+
+      {trigger.type === "event" && trigger.token && (
+        <div className="rounded-lg border border-border bg-surface-soft/40 p-2.5 text-xs">
+          <p className="mb-1 font-medium text-ink">Webhook – so löst ein externer Dienst diesen Workflow aus:</p>
+          <div className="flex items-center gap-2">
+            <code className="min-w-0 flex-1 truncate rounded bg-surface px-2 py-1 text-[11px] text-ink-soft">POST {webhookUrl}</code>
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(
+                  JSON.stringify({ workflowId: wf.id, token: trigger.token, input: "<Inhalt, z. B. E-Mail-Text>" }, null, 2),
+                );
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1500);
+              }}
+              className="shrink-0 rounded-md border border-border px-2 py-1 font-medium text-accent hover:bg-surface"
+            >
+              {copied ? "Kopiert ✓" : "Daten kopieren"}
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] text-muted">Body: workflowId + token + input (dein Auslöser-Inhalt).</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Collapsible-ish list of recent runs for one workflow. */
+function RunHistory({ runs }: { runs: WorkflowRun[] }) {
+  const [open, setOpen] = React.useState(false);
+  if (runs.length === 0) return null;
+  const shown = open ? runs : runs.slice(0, 1);
+
+  return (
+    <div className="mt-4 border-t border-border pt-3">
+      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink">
+        <History className="h-3.5 w-3.5" /> Verlauf ({runs.length}) {open ? "ausblenden" : "anzeigen"}
+      </button>
+      <div className="mt-2 space-y-2">
+        {shown.map((r) => (
+          <div key={r.id} className="rounded-lg border border-border bg-surface-soft/30 p-2.5">
+            <div className="flex items-center gap-2 text-xs">
+              {r.status === "success"
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                : <AlertCircle className="h-3.5 w-3.5 text-danger" />}
+              <span className="font-medium text-ink">{r.status === "success" ? "Erfolgreich" : "Fehler"}</span>
+              <span className="text-muted">· {triggerLabel[r.triggeredBy]}</span>
+              {r.emailSent && <span className="inline-flex items-center gap-1 text-muted"><Mail className="h-3 w-3" /> gesendet</span>}
+              <span className="ml-auto text-muted">{formatRelativeTime(r.createdAt)}</span>
+            </div>
+            <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-soft">{r.output}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -22,6 +22,11 @@ const isProtected = createRouteMatcher([
   "/api/chat(.*)",
   "/api/store(.*)",
   "/api/extract(.*)",
+  "/api/workflows/run(.*)",
+  // Note: /api/workflows/cron and /api/workflows/event stay public on purpose —
+  // they authenticate via CRON_SECRET and a per-workflow token respectively,
+  // because they are called by machines (Vercel Cron / external services), not
+  // a logged-in browser.
 ]);
 
 export default clerkEnabled
