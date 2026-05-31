@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   Phone, PhoneForwarded, PhoneOff, CalendarCheck, Voicemail, Settings2,
-  Plus, Trash2, Save, Send, X, PhoneCall,
+  Plus, Trash2, Save, Send, X, PhoneCall, ShieldCheck, MessageSquareQuote, RotateCcw,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +13,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { employees, getEmployee } from "@/lib/data/employees";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import {
-  defaultPhoneSettings, voiceOptions, callSystemPrompt, emptyCall,
-  PHONE_SETTINGS_ID, type PhoneSettings,
+  defaultPhoneSettings, voiceOptions, callSystemPrompt, emptyCall, emptyQA,
+  matchPredefinedAnswer, PHONE_SETTINGS_ID, type PhoneSettings, type PhoneQA,
 } from "@/lib/phone";
 import { formatRelativeTime, cn } from "@/lib/utils";
 import type { CallRecord, ChatMessage } from "@/lib/types";
@@ -150,11 +150,26 @@ export default function CallsPage() {
   );
 }
 
+const labelCls = "mb-1.5 block text-sm font-medium text-ink";
+const areaCls =
+  "w-full resize-none rounded-lg border border-border bg-surface-soft/50 px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none";
+
 function SettingsPanel({
   settings, onSave, onClose,
 }: { settings: PhoneSettings; onSave: (s: PhoneSettings) => void; onClose: () => void }) {
   const [draft, setDraft] = React.useState<PhoneSettings>(settings);
   const set = (patch: Partial<PhoneSettings>) => setDraft((d) => ({ ...d, ...patch }));
+
+  // Rules
+  const setRule = (i: number, v: string) => set({ rules: draft.rules.map((r, idx) => (idx === i ? v : r)) });
+  const addRule = () => set({ rules: [...draft.rules, ""] });
+  const removeRule = (i: number) => set({ rules: draft.rules.filter((_, idx) => idx !== i) });
+
+  // Predefined answers
+  const setQA = (id: string, patch: Partial<PhoneQA>) =>
+    set({ qa: draft.qa.map((q) => (q.id === id ? { ...q, ...patch } : q)) });
+  const addQA = () => set({ qa: [...draft.qa, emptyQA()] });
+  const removeQA = (id: string) => set({ qa: draft.qa.filter((q) => q.id !== id) });
 
   return (
     <Card className="mt-4 border-accent/30">
@@ -164,9 +179,9 @@ function SettingsPanel({
           <X className="h-4 w-4" />
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-ink">Wer nimmt Anrufe entgegen?</label>
+          <label className={labelCls}>Wer nimmt Anrufe entgegen?</label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {employees.map((e) => (
               <button
@@ -184,34 +199,90 @@ function SettingsPanel({
           </div>
         </div>
 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelCls}>Begrüßung</label>
+            <textarea value={draft.greeting} onChange={(e) => set({ greeting: e.target.value })} rows={2} className={areaCls} placeholder="Was der Assistent zu Beginn sagt…" />
+          </div>
+          <div>
+            <label className={labelCls}>Tonfall</label>
+            <input value={draft.tone} onChange={(e) => set({ tone: e.target.value })} className={inputCls} placeholder="z. B. freundlich und professionell" />
+          </div>
+        </div>
+
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-ink">Begrüßung</label>
+          <label className={labelCls}>Wissen über dein Unternehmen</label>
           <textarea
-            value={draft.greeting}
-            onChange={(e) => set({ greeting: e.target.value })}
-            rows={2}
-            className="w-full resize-none rounded-lg border border-border bg-surface-soft/50 px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none"
-            placeholder="Was der Assistent zu Beginn sagt…"
+            value={draft.knowledge}
+            onChange={(e) => set({ knowledge: e.target.value })}
+            rows={3}
+            className={areaCls}
+            placeholder="Fakten, die der Assistent nennen darf – z. B. Adresse, Leistungen, Parkmöglichkeiten, Ansprechpartner …"
           />
+          <p className="mt-1 text-xs text-muted">Der Assistent nutzt nur, was hier steht, und erfindet nichts dazu.</p>
+        </div>
+
+        {/* Rules / guardrails */}
+        <div>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+            <ShieldCheck className="h-4 w-4 text-accent" /> Regeln – was der Assistent immer befolgen muss
+          </label>
+          <div className="mt-2 space-y-2">
+            {draft.rules.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input value={r} onChange={(e) => setRule(i, e.target.value)} placeholder="z. B. Nenne niemals Preise am Telefon." className={inputCls} />
+                <button onClick={() => removeRule(i)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-soft hover:text-danger" aria-label="Regel entfernen">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button onClick={addRule} className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline">
+            <Plus className="h-4 w-4" /> Regel hinzufügen
+          </button>
+        </div>
+
+        {/* Predefined answers */}
+        <div>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-ink">
+            <MessageSquareQuote className="h-4 w-4 text-accent" /> Vorgegebene Antworten – du bestimmst den genauen Wortlaut
+          </label>
+          <p className="mt-1 text-xs text-muted">Wenn ein Anrufer sinngemäß so fragt, antwortet der Assistent exakt mit deinem Text.</p>
+          <div className="mt-2 space-y-2">
+            {draft.qa.map((q) => (
+              <div key={q.id} className="rounded-xl border border-border bg-surface-soft/40 p-2.5">
+                <div className="flex items-center gap-2">
+                  <input value={q.question} onChange={(e) => setQA(q.id, { question: e.target.value })} placeholder="Wenn Anrufer fragt: z. B. „Habt ihr am Wochenende offen?“" className={inputCls} />
+                  <button onClick={() => removeQA(q.id)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger" aria-label="Antwort entfernen">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <textarea value={q.answer} onChange={(e) => setQA(q.id, { answer: e.target.value })} rows={2} placeholder="…dann antworte genau: „Nein, wir haben nur werktags geöffnet.“" className={cn(areaCls, "mt-2")} />
+              </div>
+            ))}
+          </div>
+          <button onClick={addQA} className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline">
+            <Plus className="h-4 w-4" /> Antwort hinzufügen
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">Weiterleiten an (Nummer)</label>
+            <label className={labelCls}>Weiterleiten an (Nummer)</label>
             <input value={draft.forwardNumber} onChange={(e) => set({ forwardNumber: e.target.value })} placeholder="+49 …" className={inputCls} inputMode="tel" />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">Stimme / Anbieter</label>
+            <label className={labelCls}>Stimme / Anbieter</label>
             <select value={draft.voice} onChange={(e) => set({ voice: e.target.value })} className={inputCls}>
               {voiceOptions.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">Erreichbar von</label>
+            <label className={labelCls}>Erreichbar von</label>
             <input type="time" value={draft.hoursFrom} onChange={(e) => set({ hoursFrom: e.target.value })} className={inputCls} />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">Erreichbar bis</label>
+            <label className={labelCls}>Erreichbar bis</label>
             <input type="time" value={draft.hoursTo} onChange={(e) => set({ hoursTo: e.target.value })} className={inputCls} />
           </div>
         </div>
@@ -232,7 +303,13 @@ function SettingsPanel({
 
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}>Abbrechen</Button>
-          <Button variant="accent" size="sm" onClick={() => onSave({ ...draft, updatedAt: new Date().toISOString(), id: PHONE_SETTINGS_ID })}>
+          <Button variant="accent" size="sm" onClick={() => onSave({
+            ...draft,
+            rules: draft.rules.map((r) => r.trim()).filter(Boolean),
+            qa: draft.qa.filter((q) => q.question.trim() && q.answer.trim()),
+            updatedAt: new Date().toISOString(),
+            id: PHONE_SETTINGS_ID,
+          })}>
             <Save className="h-4 w-4" /> Speichern
           </Button>
         </div>
@@ -240,6 +317,13 @@ function SettingsPanel({
     </Card>
   );
 }
+
+const callSuggestions = [
+  "Guten Tag, ich hätte gern einen Termin.",
+  "Was kostet das bei Ihnen?",
+  "Haben Sie am Wochenende geöffnet?",
+  "Können Sie mich mit jemandem verbinden?",
+];
 
 function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agentName: string }) {
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
@@ -251,6 +335,17 @@ function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agent
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streaming]);
 
+  // The assistant opens the call with its configured greeting, like a real call.
+  const started = messages.length > 0;
+  const startCall = React.useCallback(() => {
+    setMessages([{ id: crypto.randomUUID(), role: "assistant", content: settings.greeting }]);
+  }, [settings.greeting]);
+
+  function reset() {
+    setMessages([]);
+    setInput("");
+  }
+
   async function send(text: string) {
     const content = text.trim();
     if (!content || streaming) return;
@@ -260,6 +355,18 @@ function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agent
     setMessages([...history, { id: assistantId, role: "assistant", content: "" }]);
     setInput("");
     setStreaming(true);
+
+    // Predefined answers are enforced client-side too, so the user's exact
+    // wording wins instantly — even before any AI is involved.
+    const canned = matchPredefinedAnswer(content, settings.qa);
+    if (canned) {
+      // Small delay so it reads like a reply, then show the verbatim answer.
+      await new Promise((r) => setTimeout(r, 250));
+      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: canned } : m)));
+      setStreaming(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -268,6 +375,8 @@ function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agent
           mode: "call",
           agentId: settings.agentId,
           systemPrompt: callSystemPrompt(settings, agentName),
+          greeting: settings.greeting,
+          qa: settings.qa,
           messages: history.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
@@ -288,6 +397,13 @@ function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agent
     }
   }
 
+  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send(input);
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -295,37 +411,68 @@ function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agent
         <Badge variant="outline"><PhoneCall className="h-3 w-3" /> Test</Badge>
       </CardHeader>
       <CardContent>
-        <div ref={scrollRef} className="max-h-64 space-y-2 overflow-y-auto">
-          {messages.length === 0 ? (
-            <p className="py-6 text-center text-xs text-muted">
-              Tippe, was ein Anrufer sagt – {agentName} antwortet wie am Telefon.
+        {!started ? (
+          <div className="py-6 text-center">
+            <p className="text-sm text-muted">
+              Spiele ein komplettes Telefonat durch – {agentName} hält sich an deine Begrüßung, Regeln und vorgegebenen Antworten.
             </p>
-          ) : (
-            messages.map((m) => (
-              <div key={m.id} className={cn("flex", m.role === "user" && "justify-end")}>
-                <div className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
-                  m.role === "user" ? "bg-ink text-canvas" : "border border-border bg-surface text-ink",
-                )}>
-                  {m.content || "…"}
+            <Button variant="accent" size="sm" className="mt-4" onClick={startCall}>
+              <PhoneCall className="h-4 w-4" /> Anruf starten
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div ref={scrollRef} className="max-h-72 space-y-2 overflow-y-auto">
+              {messages.map((m) => (
+                <div key={m.id} className={cn("flex items-end gap-2", m.role === "user" && "flex-row-reverse")}>
+                  <span className={cn(
+                    "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
+                    m.role === "user" ? "bg-ink text-canvas" : "bg-accent/15 text-accent",
+                  )}>
+                    {m.role === "user" ? "👤" : agentName.charAt(0)}
+                  </span>
+                  <div className={cn(
+                    "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
+                    m.role === "user" ? "bg-ink text-canvas" : "border border-border bg-surface text-ink",
+                  )}>
+                    {m.content || "…"}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {messages.length <= 1 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {callSuggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => send(s)}
+                    disabled={streaming}
+                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-accent/40 hover:text-ink disabled:opacity-50"
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
-            ))
-          )}
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="mt-3 flex items-center gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="„Guten Tag, ich hätte gern…“"
-            className={inputCls}
-          />
-          <Button type="submit" variant="accent" size="sm" disabled={!input.trim() || streaming} aria-label="Senden">
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
-        {messages.length > 0 && (
-          <button onClick={() => setMessages([])} className="mt-2 text-xs text-muted hover:text-ink">Gespräch zurücksetzen</button>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="mt-3 flex items-end gap-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                rows={1}
+                placeholder="Antwort des Anrufers… (Enter sendet, Shift+Enter = neue Zeile)"
+                className="max-h-32 flex-1 resize-none rounded-lg border border-border bg-surface-soft/50 px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none"
+              />
+              <Button type="submit" variant="accent" size="sm" disabled={!input.trim() || streaming} aria-label="Senden">
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+            <button onClick={reset} className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-ink">
+              <RotateCcw className="h-3 w-3" /> Gespräch zurücksetzen
+            </button>
+          </>
         )}
       </CardContent>
     </Card>
