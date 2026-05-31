@@ -141,18 +141,48 @@ function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph
   ].join("\n");
 }
 
+interface PhoneQA { question: string; answer: string }
+
+/** Best-matching predefined answer for the caller's text (mirrors the client
+ * matcher in lib/phone.ts), so canned answers also work in demo mode. */
+function matchQA(text: string, qa?: PhoneQA[]): string | null {
+  if (!qa?.length) return null;
+  const t = text.toLowerCase();
+  let best: { answer: string; score: number } | null = null;
+  for (const item of qa) {
+    const q = item.question?.trim();
+    const a = item.answer?.trim();
+    if (!q || !a) continue;
+    let score = 0;
+    if (t.includes(q.toLowerCase())) score += 5;
+    const keywords = q.toLowerCase().split(/[^a-zäöüß0-9]+/i).filter((w) => w.length >= 4);
+    for (const k of keywords) if (t.includes(k)) score += 1;
+    if (score > 0 && (!best || score > best.score)) best = { answer: a, score };
+  }
+  return best ? best.answer : null;
+}
+
 /** Demo reply for the phone-call simulator (no API key configured). */
-function mockCallReply(messages: IncomingMessage[]): string {
-  const turns = messages.filter((m) => m.role === "user").length;
+function mockCallReply(messages: IncomingMessage[], greeting?: string, qa?: PhoneQA[]): string {
   const last = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-  if (turns <= 1) {
-    return "Guten Tag, schön dass Sie anrufen! Worum geht es denn genau – ich helfe Ihnen gern weiter.";
+  const assistantHasSpoken = messages.some((m) => m.role === "assistant" && m.content.trim());
+
+  // Predefined answers win — this is the user's explicit control over wording.
+  const canned = matchQA(last, qa);
+  if (canned) return canned;
+
+  // Open the call with the greeting only if the assistant hasn't spoken yet
+  // (the UI normally seeds the greeting itself, so this is a fallback).
+  if (!assistantHasSpoken && !last) {
+    return greeting?.trim()
+      ? greeting.trim()
+      : "Guten Tag, schön dass Sie anrufen! Worum geht es denn genau – ich helfe Ihnen gern weiter.";
   }
   if (/termin|appointment|buchen|vereinbaren/i.test(last)) {
     return "Sehr gerne. Ich hätte morgen um 14:00 Uhr oder übermorgen um 10:30 Uhr einen Termin frei. Was passt Ihnen besser?";
   }
   if (/preis|kosten|angebot/i.test(last)) {
-    return "Das kann ich kurz einordnen – für ein genaues Angebot notiere ich mir am besten Ihre Eckdaten und ein Kollege meldet sich. Wie lautet Ihr Name?";
+    return "Da verbinde ich Sie am besten mit einem Kollegen – darf ich Ihren Namen und einen Rückrufwunsch notieren?";
   }
   return "Verstanden, das notiere ich. Möchten Sie, dass ich dazu einen Termin eintrage oder eine Nachricht an das Team weitergebe?";
 }
@@ -164,6 +194,8 @@ export async function POST(req: NextRequest) {
     graphs?: Graph[];
     mode?: string;
     systemPrompt?: string;
+    greeting?: string;
+    qa?: PhoneQA[];
   };
   try {
     body = await req.json();
@@ -181,7 +213,9 @@ export async function POST(req: NextRequest) {
 
   // Demo mode: no key configured -> stream a helpful mock answer.
   if (!apiKey) {
-    const reply = isCall ? mockCallReply(messages) : mockReply(messages, agentId, graphs);
+    const reply = isCall
+      ? mockCallReply(messages, body.greeting, body.qa)
+      : mockReply(messages, agentId, graphs);
     return new Response(streamText(reply), {
       headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "demo" },
     });
