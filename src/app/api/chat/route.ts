@@ -141,8 +141,30 @@ function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph
   ].join("\n");
 }
 
+/** Demo reply for the phone-call simulator (no API key configured). */
+function mockCallReply(messages: IncomingMessage[]): string {
+  const turns = messages.filter((m) => m.role === "user").length;
+  const last = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  if (turns <= 1) {
+    return "Guten Tag, schön dass Sie anrufen! Worum geht es denn genau – ich helfe Ihnen gern weiter.";
+  }
+  if (/termin|appointment|buchen|vereinbaren/i.test(last)) {
+    return "Sehr gerne. Ich hätte morgen um 14:00 Uhr oder übermorgen um 10:30 Uhr einen Termin frei. Was passt Ihnen besser?";
+  }
+  if (/preis|kosten|angebot/i.test(last)) {
+    return "Das kann ich kurz einordnen – für ein genaues Angebot notiere ich mir am besten Ihre Eckdaten und ein Kollege meldet sich. Wie lautet Ihr Name?";
+  }
+  return "Verstanden, das notiere ich. Möchten Sie, dass ich dazu einen Termin eintrage oder eine Nachricht an das Team weitergebe?";
+}
+
 export async function POST(req: NextRequest) {
-  let body: { messages?: IncomingMessage[]; agentId?: string; graphs?: Graph[] };
+  let body: {
+    messages?: IncomingMessage[];
+    agentId?: string;
+    graphs?: Graph[];
+    mode?: string;
+    systemPrompt?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -152,14 +174,22 @@ export async function POST(req: NextRequest) {
   const messages = body.messages ?? [];
   const agentId = body.agentId;
   const graphs = body.graphs;
+  const isCall = body.mode === "call";
+  // A caller-supplied prompt is only honoured for the call simulator.
+  const override = isCall && typeof body.systemPrompt === "string" ? body.systemPrompt : "";
   const apiKey = process.env.OPENAI_API_KEY;
 
   // Demo mode: no key configured -> stream a helpful mock answer.
   if (!apiKey) {
-    return new Response(streamText(mockReply(messages, agentId, graphs)), {
+    const reply = isCall ? mockCallReply(messages) : mockReply(messages, agentId, graphs);
+    return new Response(streamText(reply), {
       headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "demo" },
     });
   }
+
+  const systemContent = override
+    ? override
+    : systemPromptFor(agentId) + graphsSection(graphs);
 
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -171,7 +201,7 @@ export async function POST(req: NextRequest) {
       model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
       stream: true,
       messages: [
-        { role: "system", content: systemPromptFor(agentId) + graphsSection(graphs) },
+        { role: "system", content: systemContent },
         ...messages,
       ],
     }),
