@@ -9,6 +9,19 @@ import type { WorkflowStep, WorkflowStatus } from "@/lib/types";
 
 export type StepType = WorkflowStep["type"]; // "trigger" | "action" | "condition" | "ai"
 
+export type TriggerType = "manual" | "schedule" | "event";
+export type Schedule = "hourly" | "daily" | "weekly";
+
+export interface WorkflowTrigger {
+  type: TriggerType;
+  /** When type === "schedule". */
+  schedule?: Schedule;
+  /** Optional: send the run result to this email address (needs RESEND_API_KEY). */
+  notifyEmail?: string;
+  /** Secret token for the event webhook (so only holders of the URL can fire it). */
+  token?: string;
+}
+
 export interface UserWorkflow {
   id: string;
   name: string;
@@ -17,8 +30,26 @@ export interface UserWorkflow {
   employeeId: string;
   status: WorkflowStatus;
   steps: WorkflowStep[];
+  /** How/when this workflow runs. Older records may not have it (defaults to manual). */
+  trigger?: WorkflowTrigger;
   createdAt: string;
   updatedAt: string;
+}
+
+/** One execution of a workflow, stored per-user under the "run" kind. */
+export interface WorkflowRun {
+  id: string;
+  workflowId: string;
+  workflowName: string;
+  status: "success" | "error";
+  triggeredBy: TriggerType;
+  /** Optional input the workflow ran on (e.g. an incoming email body). */
+  input?: string;
+  /** The result the AI produced. */
+  output: string;
+  /** Whether a result email was actually sent (vs. demo). */
+  emailSent?: boolean;
+  createdAt: string;
 }
 
 const KEY = "workforce-os:workflows";
@@ -30,6 +61,20 @@ export const stepTypeLabel: Record<StepType, string> = {
   action: "Aktion",
   condition: "Bedingung",
 };
+
+export const triggerLabel: Record<TriggerType, string> = {
+  manual: "Manuell (Knopfdruck)",
+  schedule: "Zeitplan",
+  event: "Ereignis (Webhook)",
+};
+
+export const scheduleLabel: Record<Schedule, string> = {
+  hourly: "Stündlich",
+  daily: "Täglich (morgens)",
+  weekly: "Wöchentlich (Montag)",
+};
+
+export const defaultTrigger = (): WorkflowTrigger => ({ type: "manual" });
 
 export function loadUserWorkflows(): UserWorkflow[] {
   if (typeof window === "undefined") return [];
