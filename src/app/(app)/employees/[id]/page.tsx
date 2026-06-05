@@ -5,7 +5,7 @@ import { ArrowLeft, MessageSquare, Settings2, Cpu, Wrench, Brain, Clock } from "
 import { PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { GlowAvatar } from "@/components/ui/glow-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatusDot } from "@/components/app/status";
@@ -45,7 +45,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
 
       <div className="mt-4 flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Avatar name={emp.name} color={emp.avatarColor} size="xl" glow />
+          <GlowAvatar name={emp.name} color={emp.avatarColor} size="xl" />
           <div>
             <div className="flex items-center gap-3">
               <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">{emp.name}</h1>

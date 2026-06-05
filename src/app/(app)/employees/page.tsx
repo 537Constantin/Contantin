@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Plus, ArrowRight, Search } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { GlowAvatar } from "@/components/ui/glow-avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { StatusDot } from "@/components/app/status";
@@ -97,7 +97,7 @@ function EmployeesView() {
             className="group flex flex-col rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/30 hover:shadow-[var(--shadow-glow)]"
           >
             <div className="flex items-start gap-3">
-              <Avatar name={emp.name} color={emp.avatarColor} size="lg" glow />
+              <GlowAvatar name={emp.name} color={emp.avatarColor} size="lg" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-display text-lg font-semibold text-ink">{emp.name}</p>
