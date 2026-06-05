@@ -2,7 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     { "path": "/api/workflows/cron?cadence=daily", "schedule": "0 7 * * *" },
-    { "path": "/api/workflows/cron?cadence=weekly", "schedule": "0 7 * * 1" },
-    { "path": "/api/workflows/cron?cadence=hourly", "schedule": "0 * * * *" }
+    { "path": "/api/workflows/cron?cadence=weekly", "schedule": "0 7 * * 1" }
   ]
 }
