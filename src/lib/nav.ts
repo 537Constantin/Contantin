@@ -9,6 +9,7 @@ import {
   LineChart,
   UsersRound,
   Settings,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ export const navGroups: NavGroup[] = [
     label: "Betrieb",
     items: [
       { label: "Workflows", href: "/workflows", icon: Workflow },
+      { label: "Spezialisierungen", href: "/specializations", icon: GraduationCap, badge: "Neu" },
       { label: "Dokumente", href: "/documents", icon: FileText },
       { label: "Telefon", href: "/calls", icon: Phone },
     ],
