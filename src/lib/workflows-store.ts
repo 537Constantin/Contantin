@@ -47,6 +47,8 @@ export interface WorkflowRun {
   input?: string;
   /** The result the AI produced. */
   output: string;
+  /** Whether the result came from the real model ("live") or the demo fallback. */
+  mode?: "live" | "demo";
   /** Whether a result email was actually sent (vs. demo). */
   emailSent?: boolean;
   createdAt: string;

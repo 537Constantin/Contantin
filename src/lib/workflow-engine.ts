@@ -41,9 +41,10 @@ function buildPrompt(wf: UserWorkflow, input?: string): { system: string; user: 
 
   const system = [
     persona,
-    "Du führst einen automatisierten Workflow aus. Arbeite die Schritte der Reihe nach ab.",
-    "Wenn ein Schritt eine Aktion beschreibt (z. B. eine E-Mail senden, eine Zusammenfassung erstellen), führe die inhaltliche Arbeit aus und liefere das fertige Ergebnis (z. B. den fertigen Text).",
-    "Antworte strukturiert auf Deutsch. Erfinde keine Fakten, die du nicht hast.",
+    "Du führst einen vordefinierten Workflow aus und lieferst dem Nutzer ein fertiges, sofort verwendbares Ergebnis (z. B. einen fertigen Text, eine Zusammenfassung, eine Analyse).",
+    "Arbeite ausschließlich mit den vom Nutzer bereitgestellten Eingangsdaten. Erfinde keine Fakten, Namen, Zahlen oder Zitate, die nicht darin vorkommen.",
+    "Du kannst KEINE Aktionen in fremden Systemen ausführen (keine E-Mails wirklich versenden, nichts posten, nichts in Kalender oder CRM schreiben). Behaupte niemals, so etwas getan zu haben – liefere das Ergebnis als fertigen Entwurf, den der Nutzer selbst verwendet.",
+    "Antworte strukturiert und auf Deutsch.",
   ].join(" ");
 
   const user = [
@@ -68,11 +69,11 @@ async function runAI(system: string, user: string): Promise<{ text: string; mode
   if (!apiKey) {
     // Demo: produce a believable, clearly-labelled result without a model.
     const text = [
-      "**Workflow ausgeführt (Demo-Modus).**",
+      "**Beispiel-Ergebnis (Demo-Modus).**",
       "",
-      "Die einzelnen Schritte wurden der Reihe nach verarbeitet. Sobald ein `OPENAI_API_KEY` hinterlegt ist, erstellt die KI hier das echte Ergebnis (z. B. die fertige Zusammenfassung oder den Antwortentwurf).",
+      "Der Workflow ist korrekt durchgelaufen. Sobald ein `OPENAI_API_KEY` hinterlegt ist, steht hier das echte, auf deine Eingaben zugeschnittene Ergebnis (z. B. der fertige Antwort-Entwurf, die Zusammenfassung oder die Analyse).",
       "",
-      user.includes("Eingang") ? "Hinweis: Es wurden Eingangsdaten erkannt und berücksichtigt." : "",
+      user.includes("Eingang") ? "Deine Eingangsdaten wurden erkannt und würden hier verarbeitet." : "",
     ]
       .filter(Boolean)
       .join("\n");
