@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowUp, Sparkles, ChevronDown, Square, Paperclip, Mic, X, FileText } from "lucide-react";
+import { ArrowUp, Sparkles, ChevronDown, Square, Paperclip, Mic, X, FileText, GraduationCap } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/app/status";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { employees } from "@/lib/data/employees";
 import { loadGraphs } from "@/lib/graphs";
+import { loadItems } from "@/lib/store-sync";
+import { getSpecialization, buildExpertise, type UserSpecialization } from "@/lib/data/specializations";
 import { kindFromFile, readTextFile, extractTextFromFile, formatBytes, loadUserDocuments, MAX_TEXT_CHARS } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
@@ -42,8 +44,21 @@ function ChatView() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [attachment, setAttachment] = React.useState<Attachment | null>(null);
   const [fileNote, setFileNote] = React.useState<string | null>(null);
+  const [userSpecs, setUserSpecs] = React.useState<UserSpecialization[]>([]);
 
   const agent = employees.find((e) => e.id === agentId) ?? employees[0];
+
+  // An unlocked specialization assigned to the current agent gives it expertise.
+  React.useEffect(() => {
+    loadItems<UserSpecialization>("specialization").then(setUserSpecs);
+  }, []);
+  const activeExpertise = React.useMemo(() => {
+    const us = userSpecs.find((u) => u.activated && u.assignedEmployeeId === agentId);
+    if (!us) return null;
+    const spec = getSpecialization(us.id);
+    if (!spec) return null;
+    return { name: spec.name, text: buildExpertise(spec, us.customKnowledge ?? []) };
+  }, [userSpecs, agentId]);
 
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -97,6 +112,7 @@ function ChatView() {
               : m.content,
           })),
           graphs: loadGraphs(),
+          expertise: activeExpertise?.text,
         }),
         signal: controller.signal,
       });
@@ -181,7 +197,14 @@ function ChatView() {
                 <span className="font-semibold text-ink">{agent.name}</span>
                 <StatusDot status={agent.status} />
               </div>
-              <span className="text-xs text-muted">{agent.roleLabel}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted">{agent.roleLabel}</span>
+                {activeExpertise && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/12 px-1.5 py-0.5 text-[10px] font-medium text-accent">
+                    <GraduationCap className="h-3 w-3" /> {activeExpertise.name}
+                  </span>
+                )}
+              </div>
             </div>
             <ChevronDown className="h-4 w-4 text-muted" />
           </button>

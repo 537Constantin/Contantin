@@ -196,6 +196,8 @@ export async function POST(req: NextRequest) {
     systemPrompt?: string;
     greeting?: string;
     qa?: PhoneQA[];
+    /** Expertise (persona + knowledge) from an active specialization. */
+    expertise?: string;
   };
   try {
     body = await req.json();
@@ -209,13 +211,19 @@ export async function POST(req: NextRequest) {
   const isCall = body.mode === "call";
   // A caller-supplied prompt is only honoured for the call simulator.
   const override = isCall && typeof body.systemPrompt === "string" ? body.systemPrompt : "";
+  // Expertise from an active specialization is appended (never replaces the
+  // persona) and only for normal chat, not the call simulator.
+  const expertise = !isCall && typeof body.expertise === "string" ? body.expertise.slice(0, 8000) : "";
   const apiKey = process.env.OPENAI_API_KEY;
 
   // Demo mode: no key configured -> stream a helpful mock answer.
   if (!apiKey) {
-    const reply = isCall
+    let reply = isCall
       ? mockCallReply(messages, body.greeting, body.qa)
       : mockReply(messages, agentId, graphs);
+    if (expertise) {
+      reply = "*(Spezialisierung aktiv – im Demo-Modus wird das Fachwissen noch nicht voll genutzt; mit `OPENAI_API_KEY` antworte ich als Fach-Experte.)*\n\n" + reply;
+    }
     return new Response(streamText(reply), {
       headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "demo" },
     });
@@ -223,7 +231,7 @@ export async function POST(req: NextRequest) {
 
   const systemContent = override
     ? override
-    : systemPromptFor(agentId) + graphsSection(graphs);
+    : systemPromptFor(agentId) + graphsSection(graphs) + (expertise ? `\n\n${expertise}` : "");
 
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
