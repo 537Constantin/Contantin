@@ -140,5 +140,5 @@ export function buildExpertise(spec: Specialization, custom: KnowledgeEntry[] = 
       ? `Nutze das folgende Fachwissen, wenn es zur Frage passt. Erfinde nichts hinzu – wenn etwas nicht abgedeckt ist, sage es ehrlich.\n\n[Fachwissen]\n${knowledge}`
       : "",
   ].filter(Boolean);
-  return parts.join("\n\n").slice(0, 6000);
+  return parts.join("\n\n").slice(0, 12000);
 }

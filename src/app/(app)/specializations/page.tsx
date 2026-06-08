@@ -3,8 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  GraduationCap, CheckCircle2, Plus, Trash2, ChevronDown, Sparkles,
-  AlertTriangle, ArrowRight, BookOpen, Lock,
+  GraduationCap, CheckCircle2, Plus, Trash2, ChevronDown, ChevronRight, Sparkles,
+  AlertTriangle, ArrowRight, BookOpen, Lock, Upload,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { employees, getEmployee } from "@/lib/data/employees";
 import {
   specializations, type Specialization, type UserSpecialization, type KnowledgeEntry,
 } from "@/lib/data/specializations";
+import { fileToDocument } from "@/lib/files";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import { cn } from "@/lib/utils";
 
@@ -198,6 +199,9 @@ function KnowledgePanel({
 }) {
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
+  const [importing, setImporting] = React.useState(false);
+  const [note, setNote] = React.useState<string | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   function add() {
     if (!title.trim() || !content.trim()) return;
@@ -206,49 +210,79 @@ function KnowledgePanel({
     setContent("");
   }
 
+  // Import a PDF/Word/Text file: extract its text and add it as one entry.
+  async function onImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-importing the same file later
+    if (!file) return;
+    setNote(null);
+    setImporting(true);
+    try {
+      const doc = await fileToDocument(file);
+      const text = doc.text?.trim();
+      if (text) {
+        const name = file.name.replace(/\.[^.]+$/, "");
+        onChange([...custom, { id: rid(), title: name, content: text }]);
+        setNote(`„${name}" importiert und als Eintrag hinzugefügt.`);
+      } else {
+        setNote("Konnte keinen Text lesen (evtl. gescanntes PDF oder Bild). Bitte den Inhalt manuell einfügen.");
+      }
+    } catch {
+      setNote("Import fehlgeschlagen. Bitte erneut versuchen oder den Inhalt manuell einfügen.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   return (
     <div className="space-y-3 rounded-xl border border-border bg-surface-soft/30 p-3">
-      {/* Built-in knowledge */}
+      {/* Built-in knowledge (expand/collapse) */}
       <div>
         <p className="mb-1.5 text-xs font-medium text-muted">Enthaltenes Fachwissen</p>
         <div className="space-y-1.5">
           {spec.knowledge.map((e) => (
-            <details key={e.id} className="rounded-lg border border-border bg-surface px-2.5 py-1.5">
-              <summary className="cursor-pointer text-xs font-medium text-ink">{e.title}</summary>
-              <p className="mt-1 text-xs leading-relaxed text-ink-soft">{e.content}</p>
-            </details>
+            <KnowledgeRow key={e.id} entry={e} />
           ))}
         </div>
       </div>
 
-      {/* Custom knowledge */}
+      {/* Custom knowledge (expand/collapse + delete) */}
       <div>
-        <p className="mb-1.5 text-xs font-medium text-muted">Dein eigenes Fachwissen</p>
+        <p className="mb-1.5 text-xs font-medium text-muted">
+          Dein eigenes Fachwissen{custom.length > 0 ? ` (${custom.length})` : ""}
+        </p>
         {custom.length > 0 ? (
           <div className="space-y-1.5">
             {custom.map((e) => (
-              <div key={e.id} className="flex items-start gap-2 rounded-lg border border-border bg-surface px-2.5 py-1.5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-ink">{e.title}</p>
-                  <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-ink-soft">{e.content}</p>
-                </div>
-                <button
-                  onClick={() => onChange(custom.filter((c) => c.id !== e.id))}
-                  className="shrink-0 rounded-md p-1 text-muted hover:bg-surface-soft hover:text-danger"
-                  aria-label="Eintrag löschen"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              <KnowledgeRow
+                key={e.id}
+                entry={e}
+                onDelete={() => onChange(custom.filter((c) => c.id !== e.id))}
+              />
             ))}
           </div>
         ) : (
-          <p className="text-xs text-muted">Noch nichts ergänzt. Füge unten dein eigenes Wissen hinzu (z. B. eure Preise, Abläufe, Richtlinien).</p>
+          <p className="text-xs text-muted">Noch nichts ergänzt. Importiere eine Datei oder füge unten eigenes Wissen hinzu (z. B. eure Preise, Abläufe, Richtlinien).</p>
         )}
       </div>
 
-      {/* Add form */}
+      {/* Import + add */}
       <div className="space-y-2 border-t border-border pt-3">
+        <input
+          ref={fileRef}
+          type="file"
+          className="sr-only"
+          accept=".txt,.md,.markdown,.csv,.json,.pdf,.doc,.docx"
+          onChange={onImport}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+            <Upload className="h-4 w-4" /> {importing ? "Liest Datei …" : "Datei importieren"}
+          </Button>
+          <span className="text-[11px] text-muted">PDF, Word oder Text</span>
+        </div>
+        {note && <p className="text-xs text-ink-soft">{note}</p>}
+
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -267,5 +301,28 @@ function KnowledgePanel({
         </Button>
       </div>
     </div>
+  );
+}
+
+/** One knowledge entry, collapsed to its title; expands to show the content. */
+function KnowledgeRow({ entry, onDelete }: { entry: KnowledgeEntry; onDelete?: () => void }) {
+  return (
+    <details className="group rounded-lg border border-border bg-surface px-2.5 py-1.5">
+      <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted transition-transform group-open:rotate-90" />
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">{entry.title}</span>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); onDelete(); }}
+            className="shrink-0 rounded-md p-1 text-muted hover:bg-surface-soft hover:text-danger"
+            aria-label="Eintrag löschen"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </summary>
+      <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-ink-soft">{entry.content}</p>
+    </details>
   );
 }
