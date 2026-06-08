@@ -147,15 +147,7 @@ function AiTab() {
   ];
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>API-Schlüssel</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Field label="OpenAI API Key" value="sk-•••••••••••••••••••••" hint="Setze OPENAI_API_KEY in .env für den Live-Modus." />
-          <Field label="Anthropic API Key" value="sk-ant-••••••••••••••••" />
-        </CardContent>
-      </Card>
+      <AiKeyCard />
       <Card>
         <CardHeader>
           <CardTitle>Verfügbare Modelle</CardTitle>
@@ -176,6 +168,48 @@ function AiTab() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/** Live source of truth for the OpenAI connection (no secret leaves the server). */
+function AiKeyCard() {
+  const [status, setStatus] = React.useState<{ openai: boolean; model: string } | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/ai/status")
+      .then((r) => r.json())
+      .then((d) => setStatus({ openai: Boolean(d.openai), model: String(d.model ?? "gpt-4o-mini") }))
+      .catch(() => setStatus({ openai: false, model: "gpt-4o-mini" }));
+  }, []);
+
+  const state = status === null ? "loading" : status.openai ? "ok" : "off";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <span className="inline-flex items-center gap-2"><Cpu className="h-4 w-4 text-muted" /> KI-Verbindung (OpenAI)</span>
+        </CardTitle>
+        <Badge variant={state === "ok" ? "success" : state === "off" ? "warning" : "default"}>
+          {state === "loading" ? "…" : state === "ok" ? "Live-KI aktiv" : "Demo-Modus"}
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm text-ink-soft">
+        {state === "ok" && (
+          <p>
+            Live-Modus aktiv. Chat, Workflows und Spezialisierungen nutzen das echte Modell{" "}
+            <code className="rounded bg-surface-soft px-1.5 py-0.5 text-xs">{status?.model}</code>.
+          </p>
+        )}
+        {(state === "off" || state === "loading") && (
+          <p>
+            Aktuell im Demo-Modus. Setze die Umgebungsvariable{" "}
+            <code className="rounded bg-surface-soft px-1.5 py-0.5 text-xs">OPENAI_API_KEY</code> in Vercel
+            (Project → Settings → Environment Variables) und deploye neu, um echte KI-Antworten zu aktivieren.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
