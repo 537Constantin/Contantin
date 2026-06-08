@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
   const override = isCall && typeof body.systemPrompt === "string" ? body.systemPrompt : "";
   // Expertise from an active specialization is appended (never replaces the
   // persona) and only for normal chat, not the call simulator.
-  const expertise = !isCall && typeof body.expertise === "string" ? body.expertise.slice(0, 8000) : "";
+  const expertise = !isCall && typeof body.expertise === "string" ? body.expertise.slice(0, 14000) : "";
   const apiKey = process.env.OPENAI_API_KEY;
 
   // Demo mode: no key configured -> stream a helpful mock answer.
