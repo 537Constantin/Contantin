@@ -1,18 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Sparkles, Plus } from "lucide-react";
+import { ArrowRight, Sparkles, Plus, Info } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
-import { KpiCard } from "@/components/app/kpi-card";
+import { LiveStats } from "@/components/app/live-stats";
 import { ActivityFeed } from "@/components/app/activity-feed";
 import { BarChart, AreaChart, Donut } from "@/components/app/charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { StatusDot } from "@/components/app/status";
-import { Reveal } from "@/components/motion/reveal";
-import { kpis, throughput, revenueSeries, workloadSplit } from "@/lib/data/analytics";
+import { throughput, revenueSeries, workloadSplit } from "@/lib/data/analytics";
 import { activity, tasks } from "@/lib/data/activity";
 import { employees, employeeName } from "@/lib/data/employees";
 import { cn } from "@/lib/utils";
@@ -32,11 +30,11 @@ export default function DashboardPage() {
   return (
     <PageShell>
       <PageHeader
-        title="Guten Morgen, Constantin"
-        description="Deine KI-Belegschaft hat heute Nacht 7 Anrufe entgegengenommen, 31 Tickets gelöst und 4 Reports erstellt."
+        title="Willkommen zurück, Constantin"
+        description="Dein Überblick über Team, Workflows und Spezialisierungen."
       >
         <Button variant="outline" size="sm" asChild>
-          <Link href="/analytics">Report ansehen</Link>
+          <Link href="/analytics">Analyse</Link>
         </Button>
         <Button variant="accent" size="sm" asChild>
           <Link href="/chat">
@@ -45,12 +43,18 @@ export default function DashboardPage() {
         </Button>
       </PageHeader>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi, i) => (
-          <Reveal key={kpi.id} delay={i * 0.05} y={16}>
-            <KpiCard kpi={kpi} />
-          </Reveal>
-        ))}
+      {/* Real numbers from your own data */}
+      <div className="mt-6">
+        <LiveStats />
+      </div>
+
+      {/* Honesty note for the illustrative charts below */}
+      <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-border bg-surface-soft/40 p-3.5 text-sm text-ink-soft">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+        <p>
+          Die Diagramme unten sind <span className="font-medium text-ink">Beispielansichten</span>. Deine echten
+          Auswertungen erscheinen hier, sobald genug Nutzungsdaten vorliegen (volle Analyse mit aktiver Datenbank).
+        </p>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -60,7 +64,7 @@ export default function DashboardPage() {
               <CardTitle>Wochenauslastung</CardTitle>
               <p className="mt-1 text-sm text-muted">Bearbeitete Vorgänge nach Typ</p>
             </div>
-            <Badge variant="success">+14 % ggü. Vorwoche</Badge>
+            <Badge variant="warning">Beispiel</Badge>
           </CardHeader>
           <CardContent>
             <BarChart data={throughput} />
@@ -70,9 +74,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Aktivität</CardTitle>
-            <Link href="/calls" className="text-xs font-medium text-accent hover:underline">
-              Alle
-            </Link>
+            <Badge variant="warning">Beispiel</Badge>
           </CardHeader>
           <CardContent className="max-h-[320px] overflow-y-auto">
             <ActivityFeed events={activity.slice(0, 6)} />
@@ -84,7 +86,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Beeinflusster Umsatz</CardTitle>
-            <Badge variant="accent">€ Tausend</Badge>
+            <Badge variant="warning">Beispiel</Badge>
           </CardHeader>
           <CardContent>
             <AreaChart data={revenueSeries} tone="accent" />
@@ -94,6 +96,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Arbeitsverteilung</CardTitle>
+            <Badge variant="warning">Beispiel</Badge>
           </CardHeader>
           <CardContent>
             <Donut data={workloadSplit} />
@@ -102,10 +105,8 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Prioritäten heute</CardTitle>
-            <Link href="/workflows" className="text-xs font-medium text-accent hover:underline">
-              Aufgaben
-            </Link>
+            <CardTitle>Prioritäten</CardTitle>
+            <Badge variant="warning">Beispiel</Badge>
           </CardHeader>
           <CardContent className="space-y-1">
             {openTasks.map((t) => (
@@ -149,7 +150,7 @@ export default function DashboardPage() {
                     <StatusDot status={emp.status} />
                   </div>
                   <p className="truncate text-xs text-muted">{emp.roleLabel}</p>
-                  <Progress value={emp.performance} tone="accent" className="mt-2" />
+                  <p className="mt-1 line-clamp-1 text-xs text-muted">{emp.skills.slice(0, 3).join(" · ")}</p>
                 </div>
               </Link>
             ))}
