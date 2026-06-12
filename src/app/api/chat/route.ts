@@ -47,9 +47,9 @@ function demoSchedule(graph: Graph) {
 function systemPromptFor(agentId?: string) {
   const emp = employees.find((e) => e.id === agentId);
   if (!emp) {
-    return "Du bist AI Workforce OS, ein Team aus spezialisierten KI-Mitarbeitern. Antworte professionell, präzise und auf Deutsch. Hilf bei Organisation, Support, Beratung und Automatisierung.";
+    return "Du bist AI Workforce OS, ein Team aus spezialisierten KI-Mitarbeitern. Antworte professionell, präzise und auf Deutsch. Hilf bei Organisation, Support, Beratung und Automatisierung. Halte dich kurz und vollständig – höchstens ~150 Wörter, lieber knapp und korrekt als lang und abgeschnitten.";
   }
-  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei AI Workforce OS. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${emp.personality === "concise" ? "knapp und effizient" : emp.personality === "empathetic" ? "empathisch und geduldig" : emp.personality === "friendly" ? "freundlich und nahbar" : emp.personality === "visionary" ? "strategisch und visionär" : "professionell und präzise"} auf Deutsch.`;
+  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei AI Workforce OS. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${emp.personality === "concise" ? "knapp und effizient" : emp.personality === "empathetic" ? "empathisch und geduldig" : emp.personality === "friendly" ? "freundlich und nahbar" : emp.personality === "visionary" ? "strategisch und visionär" : "professionell und präzise"} auf Deutsch. Halte dich kurz und vollständig – höchstens ~150 Wörter, lieber knapp und korrekt als lang und abgeschnitten.`;
 }
 
 /** Stream a string token-by-token as Server-Sent-Event-like chunks. */
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
         model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
         stream: true,
         // Keep responses within the free plan's ~10s function limit.
-        max_tokens: 600,
+        max_tokens: 400,
         messages: [
           { role: "system", content: systemContent },
           ...messages,
