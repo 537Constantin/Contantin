@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   Play, Loader2, CheckCircle2, AlertCircle, Mail, History, Sparkles,
   Copy, Check, ChevronDown, Search, ArrowRight, Zap, Bot, GitBranch,
-  Plus, Trash2, Wand2, X, type LucideIcon,
+  Plus, Trash2, Wand2, X, GraduationCap, type LucideIcon,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/data/workflow-catalog";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import type { UserWorkflow, WorkflowRun } from "@/lib/workflows-store";
+import { getSpecialization, buildExpertise, type UserSpecialization } from "@/lib/data/specializations";
 import type { WorkflowStep } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
 
@@ -67,18 +68,32 @@ function toDisplay(w: UserWorkflow): DisplayWorkflow {
 export default function WorkflowsPage() {
   const [runs, setRuns] = React.useState<WorkflowRun[]>([]);
   const [custom, setCustom] = React.useState<UserWorkflow[]>([]);
+  const [specs, setSpecs] = React.useState<UserSpecialization[]>([]);
   const [loaded, setLoaded] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const [category, setCategory] = React.useState<WorkflowCategory | "all" | "custom">("all");
   const [query, setQuery] = React.useState("");
 
   React.useEffect(() => {
-    Promise.all([loadItems<WorkflowRun>("run"), loadItems<UserWorkflow>("workflow")]).then(([rs, ws]) => {
+    Promise.all([
+      loadItems<WorkflowRun>("run"),
+      loadItems<UserWorkflow>("workflow"),
+      loadItems<UserSpecialization>("specialization"),
+    ]).then(([rs, ws, sp]) => {
       setRuns(rs);
       setCustom(ws);
+      setSpecs(sp);
       setLoaded(true);
     });
   }, []);
+
+  /** An unlocked specialization assigned to this employee adds expertise. */
+  function specForEmployee(employeeId: string) {
+    const us = specs.find((u) => u.activated && u.assignedEmployeeId === employeeId);
+    if (!us) return null;
+    const spec = getSpecialization(us.id);
+    return spec ? { spec, custom: us.customKnowledge ?? [] } : null;
+  }
   React.useEffect(() => {
     if (loaded) void saveItems("run", runs);
   }, [runs, loaded]);
@@ -102,12 +117,14 @@ export default function WorkflowsPage() {
       createdAt: now,
       updatedAt: now,
     };
+    const sp = specForEmployee(w.employeeId);
+    const expertise = sp ? buildExpertise(sp.spec, sp.custom) : undefined;
     let run: WorkflowRun;
     try {
       const res = await fetch("/api/workflows/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workflow: wf, input }),
+        body: JSON.stringify({ workflow: wf, input, expertise }),
       });
       const data = (await res.json().catch(() => null)) as
         | { ok?: boolean; output?: string; emailSent?: boolean; mode?: "live" | "demo"; error?: string }
@@ -246,6 +263,7 @@ export default function WorkflowsPage() {
             runs={runs.filter((r) => r.workflowId === w.id)}
             onRun={runWorkflow}
             onDelete={w.custom ? () => deleteCustom(w.id) : undefined}
+            specName={specForEmployee(w.employeeId)?.spec.name}
           />
         ))}
       </div>
@@ -388,11 +406,13 @@ function WorkflowCard({
   runs,
   onRun,
   onDelete,
+  specName,
 }: {
   workflow: DisplayWorkflow;
   runs: WorkflowRun[];
   onRun: (w: DisplayWorkflow, input: string, notifyEmail?: string) => Promise<WorkflowRun>;
   onDelete?: () => void;
+  specName?: string;
 }) {
   const emp = getEmployee(w.employeeId) ?? employees[0];
   const Icon = w.icon;
@@ -450,9 +470,12 @@ function WorkflowCard({
         </div>
 
         {/* Who runs it */}
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <GlowAvatar name={emp.name} color={emp.avatarColor} size="sm" />
           <span className="text-xs text-muted">{emp.name} · {emp.roleLabel}</span>
+          {specName && (
+            <Badge variant="accent"><GraduationCap className="h-3 w-3" /> {specName}</Badge>
+          )}
           <Badge variant="outline" className="ml-auto">{w.category}</Badge>
         </div>
 

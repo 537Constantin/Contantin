@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  let body: { workflow?: UserWorkflow; input?: string };
+  let body: { workflow?: UserWorkflow; input?: string; expertise?: string };
   try {
     body = await req.json();
   } catch {
@@ -26,8 +26,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad workflow" }, { status: 400 });
   }
 
+  const expertise = typeof body.expertise === "string" ? body.expertise.slice(0, 14000) : undefined;
   try {
-    const result = await executeWorkflow(wf, body.input);
+    const result = await executeWorkflow(wf, body.input, expertise);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     return NextResponse.json(
