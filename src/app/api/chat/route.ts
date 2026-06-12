@@ -282,6 +282,12 @@ export async function POST(req: NextRequest) {
   });
 
   return new Response(stream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "live" },
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Workforce-Mode": "live",
+      // Stream tokens immediately instead of letting a proxy buffer them.
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    },
   });
 }
