@@ -90,7 +90,7 @@ async function runAI(system: string, user: string): Promise<{ text: string; mode
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      max_tokens: 600,
+      max_tokens: 500,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
