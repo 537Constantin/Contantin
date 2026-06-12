@@ -1,18 +1,24 @@
 /**
  * Central company/legal details rendered in Impressum, Datenschutzerklärung
- * and AGB. Replace every [Platzhalter] with your real data before going live,
- * and have the texts reviewed by a lawyer. Editing here updates all pages.
+ * and AGB. Editing here updates all pages.
+ *
+ * Noch zu ergänzen (für eine GmbH gesetzlich erforderlich, sobald vorhanden):
+ *  - registerCourt + registerNumber (Handelsregister: Amtsgericht + HRB-Nummer)
+ *  - vatId (USt-IdNr., sobald vom Finanzamt vergeben)
+ *  - phone (optional)
  */
 export const legal = {
-  companyName: "[Dein Unternehmen bzw. vollständiger Vor- und Nachname]",
-  representative: "[Vor- und Nachname der vertretungsberechtigten Person]",
-  street: "[Straße und Hausnummer]",
-  postalCode: "[PLZ]",
-  city: "[Ort]",
+  companyName: "Konstantin König GmbH",
+  representative: "Konstantin König", // Geschäftsführer
+  street: "Korngrube 17",
+  postalCode: "35510",
+  city: "Butzbach",
   country: "Deutschland",
-  email: "[deine-adresse@beispiel.de]",
-  phone: "[optional: Telefonnummer]",
-  vatId: "[optional: USt-IdNr. gemäß § 27a UStG]",
-  contentResponsible: "[Vor- und Nachname]",
-  lastUpdated: "Juni 2026",
+  email: "lenaaiber@proton.me",
+  phone: "", // optional – noch nicht angegeben
+  vatId: "", // USt-IdNr. – noch nicht vorhanden
+  registerCourt: "", // z. B. "Amtsgericht Friedberg (Hessen)"
+  registerNumber: "", // z. B. "HRB 12345"
+  contentResponsible: "Konstantin König",
+  lastUpdated: "12. Juni 2026",
 } as const;

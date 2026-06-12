@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell, LegalNotice, LegalSection } from "@/components/legal/legal-shell";
+import { LegalShell, LegalSection } from "@/components/legal/legal-shell";
 import { legal } from "@/lib/legal";
 import { siteConfig } from "@/lib/site";
 
@@ -11,11 +11,6 @@ export const metadata: Metadata = {
 export default function AgbPage() {
   return (
     <LegalShell title="Allgemeine Geschäftsbedingungen (AGB)" updated={legal.lastUpdated}>
-      <LegalNotice>
-        Diese AGB sind eine Vorlage. Bitte an dein konkretes Angebot und Preismodell anpassen, [Platzhalter]
-        ausfüllen und vor dem Live-Gang anwaltlich prüfen lassen.
-      </LegalNotice>
-
       <LegalSection title="§ 1 Geltungsbereich">
         <p>
           Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der von {legal.companyName}{" "}

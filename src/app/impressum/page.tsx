@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell, LegalNotice, LegalSection } from "@/components/legal/legal-shell";
+import { LegalShell, LegalSection } from "@/components/legal/legal-shell";
 import { legal } from "@/lib/legal";
 import { siteConfig } from "@/lib/site";
 
@@ -11,11 +11,6 @@ export const metadata: Metadata = {
 export default function ImpressumPage() {
   return (
     <LegalShell title="Impressum" updated={legal.lastUpdated}>
-      <LegalNotice>
-        Dies ist eine Vorlage. Ersetze alle [Platzhalter] durch deine echten Angaben und lasse das
-        Impressum vor dem Live-Gang prüfen.
-      </LegalNotice>
-
       <LegalSection title="Angaben gemäß § 5 DDG">
         <p>
           {legal.companyName}
@@ -29,20 +24,38 @@ export default function ImpressumPage() {
       </LegalSection>
 
       <LegalSection title="Vertreten durch">
-        <p>{legal.representative}</p>
+        <p>Geschäftsführer: {legal.representative}</p>
       </LegalSection>
 
       <LegalSection title="Kontakt">
         <p>
           E-Mail: {legal.email}
-          <br />
-          Telefon: {legal.phone}
+          {legal.phone && (
+            <>
+              <br />
+              Telefon: {legal.phone}
+            </>
+          )}
         </p>
       </LegalSection>
 
-      <LegalSection title="Umsatzsteuer-Identifikationsnummer">
-        <p>{legal.vatId}</p>
-      </LegalSection>
+      {legal.registerCourt && legal.registerNumber && (
+        <LegalSection title="Registereintrag">
+          <p>
+            Eintragung im Handelsregister.
+            <br />
+            Registergericht: {legal.registerCourt}
+            <br />
+            Registernummer: {legal.registerNumber}
+          </p>
+        </LegalSection>
+      )}
+
+      {legal.vatId && (
+        <LegalSection title="Umsatzsteuer-Identifikationsnummer">
+          <p>{legal.vatId}</p>
+        </LegalSection>
+      )}
 
       <LegalSection title="Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV">
         <p>

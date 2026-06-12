@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell, LegalNotice, LegalSection } from "@/components/legal/legal-shell";
+import { LegalShell, LegalSection } from "@/components/legal/legal-shell";
 import { legal } from "@/lib/legal";
 import { siteConfig } from "@/lib/site";
 
@@ -11,13 +11,6 @@ export const metadata: Metadata = {
 export default function DatenschutzPage() {
   return (
     <LegalShell title="Datenschutzerklärung" updated={legal.lastUpdated}>
-      <LegalNotice>
-        Diese Datenschutzerklärung ist eine Vorlage, die die aktuell genutzten Dienste beschreibt. Bitte an
-        deine konkrete Einrichtung anpassen, die [Platzhalter] ausfüllen und vor dem Live-Gang anwaltlich
-        prüfen lassen – insbesondere die Verarbeitung über US-Dienste (z. B. OpenAI) und die nötigen
-        Auftragsverarbeitungsverträge (AVV).
-      </LegalNotice>
-
       <LegalSection title="1. Verantwortlicher">
         <p>Verantwortlich für die Datenverarbeitung in dieser Anwendung ist:</p>
         <p>
