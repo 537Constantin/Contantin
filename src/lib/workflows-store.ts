@@ -32,6 +32,13 @@ export interface UserWorkflow {
   steps: WorkflowStep[];
   /** How/when this workflow runs. Older records may not have it (defaults to manual). */
   trigger?: WorkflowTrigger;
+  /** Free-text instruction for user-created catalog buttons (drives execution). */
+  instruction?: string;
+  /** Catalog-display fields for user-created buttons. */
+  category?: string;
+  inputLabel?: string;
+  inputPlaceholder?: string;
+  deliverable?: string;
   createdAt: string;
   updatedAt: string;
 }
