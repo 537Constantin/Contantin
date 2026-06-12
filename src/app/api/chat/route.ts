@@ -233,26 +233,45 @@ export async function POST(req: NextRequest) {
     ? override
     : systemPromptFor(agentId) + graphsSection(graphs) + (expertise ? `\n\n${expertise}` : "");
 
-  const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      stream: true,
-      max_tokens: 1200,
-      messages: [
-        { role: "system", content: systemContent },
-        ...messages,
-      ],
-    }),
-  });
+  // Hard cap: if OpenAI doesn't even start responding in time, fail fast with a
+  // clear message instead of hanging until the platform timeout. `.trim()`
+  // guards against a stray space/newline in a pasted key.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  let upstream: Response;
+  try {
+    upstream = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey.trim()}`,
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+        stream: true,
+        max_tokens: 1200,
+        messages: [
+          { role: "system", content: systemContent },
+          ...messages,
+        ],
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    const aborted = (err as Error)?.name === "AbortError";
+    const msg = aborted
+      ? "⚠️ Zeitüberschreitung: OpenAI hat nicht geantwortet. Das liegt fast immer am OpenAI-Konto – bitte prüfe, ob im Konto (und im jeweiligen Projekt) Guthaben verfügbar ist und die Nutzungslimits nicht auf 0 stehen."
+      : "⚠️ Verbindung zur KI fehlgeschlagen. Bitte in einem Moment erneut versuchen.";
+    return new Response(msg, { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "error" } });
+  }
+  clearTimeout(timer);
 
   if (!upstream.ok || !upstream.body) {
     const detail = await upstream.text().catch(() => "");
-    return new Response(`Upstream-Fehler: ${detail.slice(0, 200)}`, { status: 502 });
+    return new Response(`⚠️ OpenAI-Fehler ${upstream.status}: ${detail.slice(0, 300)}`, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "error" },
+    });
   }
 
   // Transform OpenAI SSE stream into plain text token stream.
