@@ -104,7 +104,7 @@ export function matchPredefinedAnswer(
  * greeting, tone, business knowledge, hard rules and predefined answers, so the
  * assistant only ever says what the user allows.
  */
-export function callSystemPrompt(settings: PhoneSettings, agentName: string): string {
+export function callSystemPrompt(settings: PhoneSettings, agentName: string, expertise?: string): string {
   const rules = settings.rules?.filter((r) => r.trim()) ?? [];
   const qa = settings.qa?.filter((q) => q.question.trim() && q.answer.trim()) ?? [];
   const parts = [
@@ -114,6 +114,9 @@ export function callSystemPrompt(settings: PhoneSettings, agentName: string): st
     settings.tone?.trim() ? `Dein Tonfall ist ${settings.tone.trim()}.` : ``,
     settings.knowledge?.trim()
       ? `Diese Informationen über das Unternehmen darfst du nutzen:\n${settings.knowledge.trim()}`
+      : ``,
+    expertise?.trim()
+      ? `Zusätzliches Fachwissen, das du am Telefon nutzen darfst – fasse es knapp und mündlich zusammen:\n${expertise.trim()}`
       : ``,
     rules.length
       ? `Verbindliche Regeln, an die du dich IMMER halten musst:\n${rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}`

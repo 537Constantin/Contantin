@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   Phone, PhoneForwarded, PhoneOff, CalendarCheck, Voicemail, Settings2,
-  Plus, Trash2, Save, Send, X, PhoneCall, ShieldCheck, MessageSquareQuote, RotateCcw,
+  Plus, Trash2, Save, Send, X, PhoneCall, ShieldCheck, MessageSquareQuote, RotateCcw, GraduationCap,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import {
   defaultPhoneSettings, voiceOptions, callSystemPrompt, emptyCall, emptyQA,
   matchPredefinedAnswer, PHONE_SETTINGS_ID, type PhoneSettings, type PhoneQA,
 } from "@/lib/phone";
+import { getSpecialization, buildExpertise, type UserSpecialization } from "@/lib/data/specializations";
 import { formatRelativeTime, cn } from "@/lib/utils";
 import type { CallRecord, ChatMessage } from "@/lib/types";
 
@@ -40,6 +41,7 @@ const inputCls =
 export default function CallsPage() {
   const [settings, setSettings] = React.useState<PhoneSettings | null>(null);
   const [calls, setCalls] = React.useState<CallRecord[]>([]);
+  const [specs, setSpecs] = React.useState<UserSpecialization[]>([]);
   const [loaded, setLoaded] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
 
@@ -47,9 +49,11 @@ export default function CallsPage() {
     Promise.all([
       loadItems<PhoneSettings>("phone"),
       loadItems<CallRecord>("call"),
-    ]).then(([ph, cl]) => {
+      loadItems<UserSpecialization>("specialization"),
+    ]).then(([ph, cl, sp]) => {
       setSettings(ph[0] ?? defaultPhoneSettings(employees[0].id));
       setCalls(cl);
+      setSpecs(sp);
       setLoaded(true);
     });
   }, []);
@@ -63,6 +67,11 @@ export default function CallsPage() {
 
   const agent = (settings && getEmployee(settings.agentId)) || employees[0];
   const scheduled = calls.filter((c) => c.outcome === "scheduled").length;
+
+  // An unlocked specialization assigned to the phone agent adds expertise to calls.
+  const us = settings ? specs.find((u) => u.activated && u.assignedEmployeeId === settings.agentId) : undefined;
+  const phoneSpec = us ? getSpecialization(us.id) : undefined;
+  const phoneExpertise = phoneSpec ? buildExpertise(phoneSpec, us?.customKnowledge ?? []) : undefined;
 
   const addCall = (c: CallRecord) => setCalls((prev) => [c, ...prev]);
   const updateCall = (id: string, patch: Partial<CallRecord>) =>
@@ -111,6 +120,9 @@ export default function CallsPage() {
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                 <Avatar name={agent.name} color={agent.avatarColor} size="sm" /> {agent.name} nimmt Anrufe entgegen
               </p>
+              {phoneSpec && (
+                <Badge variant="accent" className="mt-2"><GraduationCap className="h-3 w-3" /> {phoneSpec.name}</Badge>
+              )}
               <div className="mt-4 grid w-full grid-cols-2 gap-3">
                 <div className="rounded-xl bg-surface-soft/60 p-3">
                   <p className="font-display text-xl font-semibold text-ink">{calls.length}</p>
@@ -124,7 +136,7 @@ export default function CallsPage() {
             </CardContent>
           </Card>
 
-          <CallSimulator settings={settings} agentName={agent.name} />
+          <CallSimulator settings={settings} agentName={agent.name} expertise={phoneExpertise} />
         </div>
 
         {/* Call log */}
@@ -197,6 +209,7 @@ function SettingsPanel({
               </button>
             ))}
           </div>
+          <p className="mt-2 text-xs text-muted">Hat der gewählte Mitarbeiter eine freigeschaltete Spezialisierung, nutzt der Telefon-Assistent dieses Fachwissen automatisch.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -325,7 +338,7 @@ const callSuggestions = [
   "Können Sie mich mit jemandem verbinden?",
 ];
 
-function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agentName: string }) {
+function CallSimulator({ settings, agentName, expertise }: { settings: PhoneSettings; agentName: string; expertise?: string }) {
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [streaming, setStreaming] = React.useState(false);
@@ -374,7 +387,7 @@ function CallSimulator({ settings, agentName }: { settings: PhoneSettings; agent
         body: JSON.stringify({
           mode: "call",
           agentId: settings.agentId,
-          systemPrompt: callSystemPrompt(settings, agentName),
+          systemPrompt: callSystemPrompt(settings, agentName, expertise),
           greeting: settings.greeting,
           qa: settings.qa,
           messages: history.map((m) => ({ role: m.role, content: m.content })),
