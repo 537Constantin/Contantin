@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   Play, Loader2, CheckCircle2, AlertCircle, Mail, History, Sparkles,
   Copy, Check, ChevronDown, Search, ArrowRight, Zap, Bot, GitBranch,
+  Plus, Trash2, Wand2, X, type LucideIcon,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { GlowAvatar } from "@/components/ui/glow-avatar";
 import { employees, getEmployee } from "@/lib/data/employees";
 import {
   workflowCatalog, catalogCategories,
-  type CatalogWorkflow, type WorkflowCategory,
+  type WorkflowCategory,
 } from "@/lib/data/workflow-catalog";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import type { UserWorkflow, WorkflowRun } from "@/lib/workflows-store";
@@ -29,33 +30,74 @@ const stepMeta: Record<WorkflowStep["type"], { icon: typeof Zap; color: string }
   condition: { icon: GitBranch, color: "var(--color-cyan)" },
 };
 
+/** A catalog entry to display + run — either a preset or a user-created button. */
+interface DisplayWorkflow {
+  id: string;
+  name: string;
+  description: string;
+  category: WorkflowCategory;
+  employeeId: string;
+  icon: LucideIcon;
+  inputLabel: string;
+  inputPlaceholder: string;
+  deliverable: string;
+  steps: WorkflowStep[];
+  custom?: boolean;
+  instruction?: string;
+}
+
+/** Map a saved user workflow to a catalog-style display entry. */
+function toDisplay(w: UserWorkflow): DisplayWorkflow {
+  return {
+    id: w.id,
+    name: w.name,
+    description: w.description,
+    category: (w.category as WorkflowCategory) ?? "Kommunikation",
+    employeeId: w.employeeId,
+    icon: Wand2,
+    inputLabel: w.inputLabel ?? "Deine Eingabe",
+    inputPlaceholder: w.inputPlaceholder ?? "Gib hier die Daten/Infos ein, mit denen gearbeitet werden soll …",
+    deliverable: w.deliverable ?? "Fertiges Ergebnis",
+    steps: w.steps,
+    custom: true,
+    instruction: w.instruction,
+  };
+}
+
 export default function WorkflowsPage() {
   const [runs, setRuns] = React.useState<WorkflowRun[]>([]);
+  const [custom, setCustom] = React.useState<UserWorkflow[]>([]);
   const [loaded, setLoaded] = React.useState(false);
-  const [category, setCategory] = React.useState<WorkflowCategory | "all">("all");
+  const [creating, setCreating] = React.useState(false);
+  const [category, setCategory] = React.useState<WorkflowCategory | "all" | "custom">("all");
   const [query, setQuery] = React.useState("");
 
   React.useEffect(() => {
-    loadItems<WorkflowRun>("run").then((rs) => {
+    Promise.all([loadItems<WorkflowRun>("run"), loadItems<UserWorkflow>("workflow")]).then(([rs, ws]) => {
       setRuns(rs);
+      setCustom(ws);
       setLoaded(true);
     });
   }, []);
   React.useEffect(() => {
     if (loaded) void saveItems("run", runs);
   }, [runs, loaded]);
+  React.useEffect(() => {
+    if (loaded) void saveItems("workflow", custom);
+  }, [custom, loaded]);
 
   const addRun = (run: WorkflowRun) => setRuns((prev) => [run, ...prev].slice(0, 60));
 
-  async function runWorkflow(cw: CatalogWorkflow, input: string, notifyEmail?: string): Promise<WorkflowRun> {
+  async function runWorkflow(w: DisplayWorkflow, input: string, notifyEmail?: string): Promise<WorkflowRun> {
     const now = new Date().toISOString();
     const wf: UserWorkflow = {
-      id: cw.id,
-      name: cw.name,
-      description: cw.description,
-      employeeId: cw.employeeId,
+      id: w.id,
+      name: w.name,
+      description: w.description,
+      employeeId: w.employeeId,
       status: "live",
-      steps: cw.steps,
+      steps: w.steps,
+      instruction: w.instruction,
       trigger: notifyEmail ? { type: "manual", notifyEmail } : { type: "manual" },
       createdAt: now,
       updatedAt: now,
@@ -72,8 +114,8 @@ export default function WorkflowsPage() {
         | null;
       run = {
         id: rid(),
-        workflowId: cw.id,
-        workflowName: cw.name,
+        workflowId: w.id,
+        workflowName: w.name,
         status: data?.ok ? "success" : "error",
         triggeredBy: "manual",
         input: input.slice(0, 4000),
@@ -85,8 +127,8 @@ export default function WorkflowsPage() {
     } catch {
       run = {
         id: rid(),
-        workflowId: cw.id,
-        workflowName: cw.name,
+        workflowId: w.id,
+        workflowName: w.name,
         status: "error",
         triggeredBy: "manual",
         input: input.slice(0, 4000),
@@ -98,8 +140,44 @@ export default function WorkflowsPage() {
     return run;
   }
 
-  const list = workflowCatalog.filter((w) => {
-    const matchCat = category === "all" || w.category === category;
+  function createCustom(d: { name: string; employeeId: string; category: WorkflowCategory; instruction: string; inputLabel: string }) {
+    const now = new Date().toISOString();
+    const wf: UserWorkflow = {
+      id: `cw-${rid()}`,
+      name: d.name.trim(),
+      description: d.instruction.trim().slice(0, 140),
+      employeeId: d.employeeId,
+      category: d.category,
+      instruction: d.instruction.trim(),
+      inputLabel: d.inputLabel.trim() || "Deine Eingabe",
+      inputPlaceholder: "Gib hier die Daten/Infos ein, mit denen gearbeitet werden soll …",
+      deliverable: "Fertiges Ergebnis",
+      status: "live",
+      steps: [
+        { id: "s1", type: "ai", label: "Auftrag verstehen", detail: "Eingabe & Ziel erfassen" },
+        { id: "s2", type: "ai", label: "Umsetzen", detail: d.name.trim() },
+        { id: "s3", type: "action", label: "Ergebnis liefern", detail: "Fertig zum Verwenden" },
+      ],
+      trigger: { type: "manual" },
+      createdAt: now,
+      updatedAt: now,
+    };
+    setCustom((prev) => [wf, ...prev]);
+    setCreating(false);
+    setCategory("custom");
+  }
+
+  function deleteCustom(id: string) {
+    setCustom((prev) => prev.filter((w) => w.id !== id));
+    setRuns((prev) => prev.filter((r) => r.workflowId !== id));
+  }
+
+  const all: DisplayWorkflow[] = [
+    ...custom.map(toDisplay),
+    ...workflowCatalog.map((cw) => ({ ...cw, custom: false }) as DisplayWorkflow),
+  ];
+  const list = all.filter((w) => {
+    const matchCat = category === "all" ? true : category === "custom" ? w.custom : w.category === category;
     const q = query.trim().toLowerCase();
     const matchQuery = !q || w.name.toLowerCase().includes(q) || w.description.toLowerCase().includes(q);
     return matchCat && matchQuery;
@@ -109,46 +187,65 @@ export default function WorkflowsPage() {
     <PageShell>
       <PageHeader
         title="Workflows"
-        description="Fertige KI-Abläufe: Daten rein, fertiges Ergebnis raus. Wähle einen Ablauf, gib deine Daten ein – die KI erledigt den Rest."
+        description="Fertige KI-Abläufe: Daten rein, fertiges Ergebnis raus. Nutze eine Vorlage – oder erstelle einen eigenen Button für deinen KI-Mitarbeiter."
       />
 
-      {/* Honesty note: what a workflow really does */}
+      {/* Honesty note */}
       <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-border bg-surface-soft/40 p-3.5 text-sm text-ink-soft">
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
         <p>
           <span className="font-medium text-ink">So funktionieren Workflows:</span> Die KI erstellt dir das fertige
-          Ergebnis (z. B. den Antwort-Entwurf) – du prüfst es und verwendest es. Echte Aktionen in anderen Konten
-          (z. B. wirklich versenden oder posten) kommen als nächste Ausbaustufe.
+          Ergebnis (z. B. den Antwort-Entwurf) – du prüfst es und verwendest es. Mit{" "}
+          <span className="font-medium text-ink">Eigener Button</span> erweiterst du den Katalog um deine eigenen
+          Abläufe. Echte Aktionen in anderen Konten (z. B. wirklich versenden) kommen als nächste Ausbaustufe.
         </p>
       </div>
 
-      {/* Category filter + search */}
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Filter + search + create */}
+      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1.5">
           <FilterChip active={category === "all"} onClick={() => setCategory("all")}>Alle</FilterChip>
+          {custom.length > 0 && (
+            <FilterChip active={category === "custom"} onClick={() => setCategory("custom")}>
+              <Wand2 className="h-3.5 w-3.5" /> Eigene ({custom.length})
+            </FilterChip>
+          )}
           {catalogCategories.map((c) => (
             <FilterChip key={c} active={category === c} onClick={() => setCategory(c)}>{c}</FilterChip>
           ))}
         </div>
-        <label className="relative flex items-center sm:w-64">
-          <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Workflow suchen…"
-            className="h-10 w-full rounded-full border border-border bg-surface-soft/60 pl-9 pr-3 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none"
-          />
-        </label>
+        <div className="flex items-center gap-2">
+          <label className="relative flex flex-1 items-center sm:w-56">
+            <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Workflow suchen…"
+              className="h-10 w-full rounded-full border border-border bg-surface-soft/60 pl-9 pr-3 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none"
+            />
+          </label>
+          <Button variant="accent" size="sm" className="shrink-0" onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4" /> Eigener Button
+          </Button>
+        </div>
       </div>
 
-      {/* Catalog */}
+      {/* Creator */}
+      {creating && (
+        <div className="mt-4">
+          <WorkflowCreator onCreate={createCustom} onCancel={() => setCreating(false)} />
+        </div>
+      )}
+
+      {/* Catalog (presets + custom) */}
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {list.map((cw) => (
+        {list.map((w) => (
           <WorkflowCard
-            key={cw.id}
-            workflow={cw}
-            runs={runs.filter((r) => r.workflowId === cw.id)}
+            key={w.id}
+            workflow={w}
+            runs={runs.filter((r) => r.workflowId === w.id)}
             onRun={runWorkflow}
+            onDelete={w.custom ? () => deleteCustom(w.id) : undefined}
           />
         ))}
       </div>
@@ -156,7 +253,9 @@ export default function WorkflowsPage() {
       {list.length === 0 && (
         <Card className="mt-4">
           <CardContent className="py-12 text-center text-sm text-muted">
-            Kein Workflow gefunden. Versuch eine andere Kategorie oder Suche.
+            {category === "custom"
+              ? "Noch keine eigenen Buttons. Erstelle deinen ersten mit 'Eigener Button' oben rechts."
+              : "Kein Workflow gefunden. Versuch eine andere Kategorie oder Suche."}
           </CardContent>
         </Card>
       )}
@@ -169,7 +268,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
     <button
       onClick={onClick}
       className={cn(
-        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+        "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
         active ? "bg-ink text-canvas" : "bg-surface-soft text-ink-soft hover:text-ink",
       )}
     >
@@ -178,17 +277,125 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
+function WorkflowCreator({
+  onCreate,
+  onCancel,
+}: {
+  onCreate: (d: { name: string; employeeId: string; category: WorkflowCategory; instruction: string; inputLabel: string }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = React.useState("");
+  const [employeeId, setEmployeeId] = React.useState(employees[0].id);
+  const [category, setCategory] = React.useState<WorkflowCategory>("Kommunikation");
+  const [instruction, setInstruction] = React.useState("");
+  const [inputLabel, setInputLabel] = React.useState("");
+  const valid = name.trim().length > 1 && instruction.trim().length > 4;
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/10 text-accent"><Wand2 className="h-4 w-4" /></span>
+            <h3 className="font-display text-base font-semibold text-ink">Eigenen Button erstellen</h3>
+          </div>
+          <button onClick={onCancel} className="rounded-md p-1 text-muted hover:bg-surface-soft hover:text-ink" aria-label="Schließen">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-sm text-muted">
+          Lege einen neuen Workflow-Button für den Katalog an: Name, zuständiger KI-Mitarbeiter und – mit eigenen Worten –
+          was er tun soll. Der Button erscheint danach im Katalog und ist beliebig oft ausführbar.
+        </p>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Name des Buttons</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="z. B. Produktbeschreibung schreiben"
+              className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Zuständiger KI-Mitarbeiter</label>
+            <select
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm font-medium text-ink focus:border-accent/40 focus:outline-none"
+            >
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>{e.name} · {e.roleLabel}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Kategorie</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as WorkflowCategory)}
+              className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm font-medium text-ink focus:border-accent/40 focus:outline-none"
+            >
+              {catalogCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Eingabe-Hinweis (optional)</label>
+            <input
+              value={inputLabel}
+              onChange={(e) => setInputLabel(e.target.value)}
+              placeholder="z. B. Eckdaten zum Produkt"
+              className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Was soll der Mitarbeiter tun?</label>
+          <textarea
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+            placeholder="Beschreibe die Aufgabe mit eigenen Worten – z. B.: Schreibe aus meinen Eckdaten eine überzeugende Produktbeschreibung mit Überschrift, 3 Vorteilen und einem Call-to-Action."
+            rows={4}
+            className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:outline-none"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="accent"
+            size="sm"
+            disabled={!valid}
+            onClick={() => onCreate({ name, employeeId, category, instruction, inputLabel })}
+          >
+            <Plus className="h-4 w-4" /> Button erstellen
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onCancel}>Abbrechen</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function WorkflowCard({
-  workflow: cw,
+  workflow: w,
   runs,
   onRun,
+  onDelete,
 }: {
-  workflow: CatalogWorkflow;
+  workflow: DisplayWorkflow;
   runs: WorkflowRun[];
-  onRun: (cw: CatalogWorkflow, input: string, notifyEmail?: string) => Promise<WorkflowRun>;
+  onRun: (w: DisplayWorkflow, input: string, notifyEmail?: string) => Promise<WorkflowRun>;
+  onDelete?: () => void;
 }) {
-  const emp = getEmployee(cw.employeeId) ?? employees[0];
-  const Icon = cw.icon;
+  const emp = getEmployee(w.employeeId) ?? employees[0];
+  const Icon = w.icon;
   const [open, setOpen] = React.useState(false);
   const [input, setInput] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -200,14 +407,14 @@ function WorkflowCard({
 
   async function handleRun() {
     if (!input.trim()) {
-      setError(`Bitte zuerst ${cw.inputLabel.toLowerCase()} eingeben.`);
+      setError(`Bitte zuerst ${w.inputLabel.toLowerCase()} eingeben.`);
       inputRef.current?.focus();
       return;
     }
     setError(null);
     setRunning(true);
     try {
-      await onRun(cw, input.trim(), email.trim() || undefined);
+      await onRun(w, input.trim(), email.trim() || undefined);
     } finally {
       setRunning(false);
     }
@@ -218,38 +425,53 @@ function WorkflowCard({
       <CardContent className="flex h-full flex-col p-5">
         {/* Head */}
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-surface-soft/60">
-            <Icon className="h-5 w-5 text-ink" />
+          <span className={cn(
+            "grid h-11 w-11 shrink-0 place-items-center rounded-xl border",
+            w.custom ? "border-accent/30 bg-accent/10 text-accent" : "border-border bg-surface-soft/60 text-ink",
+          )}>
+            <Icon className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h3 className="font-display text-base font-semibold text-ink">{cw.name}</h3>
-            <p className="mt-0.5 text-sm text-muted">{cw.description}</p>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-base font-semibold text-ink">{w.name}</h3>
+              {w.custom && <Badge variant="accent">Eigener</Badge>}
+            </div>
+            <p className="mt-0.5 text-sm text-muted">{w.description}</p>
           </div>
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="shrink-0 rounded-md p-1.5 text-muted hover:bg-surface-soft hover:text-danger"
+              aria-label="Eigenen Button löschen"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Who runs it */}
         <div className="mt-3 flex items-center gap-2">
           <GlowAvatar name={emp.name} color={emp.avatarColor} size="sm" />
           <span className="text-xs text-muted">{emp.name} · {emp.roleLabel}</span>
-          <Badge variant="outline" className="ml-auto">{cw.category}</Badge>
+          <Badge variant="outline" className="ml-auto">{w.category}</Badge>
         </div>
 
         {/* In / Out */}
         <div className="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-border bg-surface-soft/40 p-3 text-xs sm:grid-cols-2">
           <div>
             <p className="font-medium text-muted">Du gibst</p>
-            <p className="text-ink-soft">{cw.inputLabel}</p>
+            <p className="text-ink-soft">{w.inputLabel}</p>
           </div>
           <div>
             <p className="font-medium text-muted">Du bekommst</p>
-            <p className="text-ink-soft">{cw.deliverable}</p>
+            <p className="text-ink-soft">{w.deliverable}</p>
           </div>
         </div>
 
         {/* Step chain */}
         <div className="mt-3 flex flex-wrap items-center gap-1.5 overflow-x-auto">
-          {cw.steps.map((s, i) => (
-            <ChainStep key={s.id} step={s} last={i === cw.steps.length - 1} />
+          {w.steps.map((s, i) => (
+            <ChainStep key={s.id} step={s} last={i === w.steps.length - 1} />
           ))}
         </div>
 
@@ -264,12 +486,12 @@ function WorkflowCard({
         {open && (
           <div className="mt-3 space-y-3 rounded-xl border border-border bg-surface-soft/30 p-3">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink">{cw.inputLabel}</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink">{w.inputLabel}</label>
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => { setInput(e.target.value); if (error) setError(null); }}
-                placeholder={cw.inputPlaceholder}
+                placeholder={w.inputPlaceholder}
                 rows={5}
                 className={cn(
                   "w-full resize-y rounded-xl border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none",

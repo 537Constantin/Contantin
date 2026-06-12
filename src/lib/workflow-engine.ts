@@ -47,9 +47,14 @@ function buildPrompt(wf: UserWorkflow, input?: string): { system: string; user: 
     "Antworte strukturiert und auf Deutsch.",
   ].join(" ");
 
+  const goal = wf.instruction?.trim()
+    ? `Auftrag des Nutzers (genau und vollständig umsetzen):\n"""\n${wf.instruction.trim().slice(0, 4000)}\n"""`
+    : wf.description
+    ? `Ziel: ${wf.description}`
+    : "";
   const user = [
     `Workflow: „${wf.name}"`,
-    wf.description ? `Ziel: ${wf.description}` : "",
+    goal,
     ``,
     `Schritte:`,
     steps,
