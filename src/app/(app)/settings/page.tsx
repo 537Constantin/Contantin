@@ -275,10 +275,7 @@ function BillingTab() {
               {portalLoading && <Loader2 className="h-4 w-4 animate-spin" />} Abo verwalten
             </Button>
           </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-soft">
-            <div className="h-full w-[64%] rounded-full bg-[linear-gradient(90deg,var(--color-accent),var(--color-cyan))]" />
-          </div>
-          <p className="mt-2 text-xs text-muted">6.402 von 10.000 KI-Aktionen diesen Monat verbraucht</p>
+          <p className="mt-4 text-xs text-muted">Die Nutzungsmessung (verbrauchte KI-Aktionen) wird mit der Datenbank- und Abrechnungs-Anbindung aktiviert.</p>
           {portalMsg && (
             <p className="mt-3 rounded-lg bg-surface-soft/60 p-2.5 text-xs text-muted">{portalMsg}</p>
           )}
@@ -320,11 +317,11 @@ function BillingTab() {
 
 function NotificationsTab() {
   const items = [
-    { label: "Anruf-Zusammenfassungen", desc: "E-Mail nach jedem entgegengenommenen Anruf", on: true },
-    { label: "Tägliches Briefing", desc: "Morgendliche Übersicht über offene Aufgaben", on: true },
-    { label: "Workflow-Fehler", desc: "Sofortige Benachrichtigung bei fehlgeschlagenen Runs", on: true },
-    { label: "Wöchentlicher Report", desc: "KPI-Report jeden Montag", on: true },
-    { label: "Produkt-Updates", desc: "Neue Funktionen & Verbesserungen", on: false },
+    { k: "calls", label: "Anruf-Zusammenfassungen", desc: "E-Mail nach jedem entgegengenommenen Anruf", on: true },
+    { k: "briefing", label: "Tägliches Briefing", desc: "Morgendliche Übersicht über offene Aufgaben", on: true },
+    { k: "wf-errors", label: "Workflow-Fehler", desc: "Sofortige Benachrichtigung bei fehlgeschlagenen Runs", on: true },
+    { k: "weekly", label: "Wöchentlicher Report", desc: "KPI-Report jeden Montag", on: true },
+    { k: "product", label: "Produkt-Updates", desc: "Neue Funktionen & Verbesserungen", on: false },
   ];
   return (
     <Card>
@@ -333,15 +330,32 @@ function NotificationsTab() {
       </CardHeader>
       <CardContent className="space-y-1">
         {items.map((it) => (
-          <Toggle key={it.label} label={it.label} desc={it.desc} defaultOn={it.on} />
+          <Toggle key={it.k} storageKey={`workforce-os:notify:${it.k}`} label={it.label} desc={it.desc} defaultOn={it.on} />
         ))}
+        <p className="pt-3 text-xs text-muted">Deine Auswahl wird gespeichert. Der tatsächliche E-Mail-Versand wird aktiv, sobald ein E-Mail-Dienst (Resend) eingerichtet ist.</p>
       </CardContent>
     </Card>
   );
 }
 
-function Toggle({ label, desc, defaultOn }: { label: string; desc: string; defaultOn: boolean }) {
+function Toggle({ label, desc, defaultOn, storageKey }: { label: string; desc: string; defaultOn: boolean; storageKey?: string }) {
   const [on, setOn] = React.useState(defaultOn);
+  React.useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const v = window.localStorage.getItem(storageKey);
+      if (v != null) setOn(v === "1");
+    } catch { /* ignore */ }
+  }, [storageKey]);
+  function toggle() {
+    setOn((v) => {
+      const next = !v;
+      if (storageKey) {
+        try { window.localStorage.setItem(storageKey, next ? "1" : "0"); } catch { /* ignore */ }
+      }
+      return next;
+    });
+  }
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border py-3 last:border-0">
       <div>
@@ -349,7 +363,7 @@ function Toggle({ label, desc, defaultOn }: { label: string; desc: string; defau
         <p className="text-sm text-muted">{desc}</p>
       </div>
       <button
-        onClick={() => setOn((v) => !v)}
+        onClick={toggle}
         className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors", on ? "bg-accent" : "bg-surface-soft")}
         role="switch"
         aria-checked={on}
@@ -368,10 +382,9 @@ function SecurityTab() {
         <CardHeader>
           <CardTitle>Authentifizierung</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1">
-          <Toggle label="Zwei-Faktor-Authentifizierung" desc="Zusätzliche Sicherheit beim Login" defaultOn={true} />
-          <Toggle label="SSO (SAML)" desc="Single Sign-On für Enterprise-Teams" defaultOn={true} />
-          <Toggle label="IP-Allowlist" desc="Zugriff nur aus erlaubten Netzwerken" defaultOn={false} />
+        <CardContent className="space-y-2 text-sm text-ink-soft">
+          <p>Login, Passwort-Reset, Zwei-Faktor-Authentifizierung und Google-/Apple-Login werden über den Auth-Anbieter (Clerk) bereitgestellt, sobald er eingerichtet ist.</p>
+          <p className="text-xs text-muted">SSO (SAML) und IP-Allowlist sind für Enterprise geplant und derzeit nicht aktiv.</p>
         </CardContent>
       </Card>
       <Card>
