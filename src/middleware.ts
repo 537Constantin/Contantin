@@ -14,6 +14,7 @@ const isProtected = createRouteMatcher([
   "/employees(.*)",
   "/chat(.*)",
   "/workflows(.*)",
+  "/specializations(.*)",
   "/documents(.*)",
   "/calls(.*)",
   "/analytics(.*)",

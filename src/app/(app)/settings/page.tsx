@@ -376,18 +376,16 @@ function SecurityTab() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Datenschutz & Compliance</CardTitle>
-          <Badge variant="success">DSGVO</Badge>
+          <CardTitle>Datenschutz & Recht</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-ink-soft">
-          <p>Alle Daten werden verschlüsselt in der EU gespeichert (AES-256 at rest, TLS 1.3 in transit).</p>
+          <p>Die Verbindung ist per TLS verschlüsselt. Welche Daten zu welchem Zweck verarbeitet werden – einschließlich der KI-Verarbeitung über OpenAI – steht transparent in der Datenschutzerklärung.</p>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">SOC 2 Type II</Badge>
-            <Badge variant="outline">ISO 27001</Badge>
-            <Badge variant="outline">EU-Hosting</Badge>
-            <Badge variant="outline">Audit-Logs</Badge>
+            <Button asChild variant="outline" size="sm"><a href="/datenschutz">Datenschutz</a></Button>
+            <Button asChild variant="outline" size="sm"><a href="/impressum">Impressum</a></Button>
+            <Button asChild variant="outline" size="sm"><a href="/agb">AGB</a></Button>
           </div>
-          <Button variant="outline" size="sm" className="mt-1">Daten exportieren</Button>
+          <p className="text-xs text-muted">Hinweis: Zertifizierungen wie SOC 2 oder ISO 27001 bestehen derzeit nicht und werden daher nicht ausgewiesen.</p>
         </CardContent>
       </Card>
     </div>
