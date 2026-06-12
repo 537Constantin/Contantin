@@ -242,6 +242,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
       stream: true,
+      max_tokens: 1200,
       messages: [
         { role: "system", content: systemContent },
         ...messages,
