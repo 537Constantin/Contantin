@@ -30,7 +30,7 @@ function stepLabel(type: string): string {
 }
 
 /** Build the instruction the AI follows to execute the workflow. */
-function buildPrompt(wf: UserWorkflow, input?: string): { system: string; user: string } {
+function buildPrompt(wf: UserWorkflow, input?: string, expertise?: string): { system: string; user: string } {
   const emp = employees.find((e) => e.id === wf.employeeId);
   const persona = emp
     ? `Du bist ${emp.name}, ${emp.roleLabel}. ${emp.description}`
@@ -45,7 +45,7 @@ function buildPrompt(wf: UserWorkflow, input?: string): { system: string; user: 
     "Arbeite ausschließlich mit den vom Nutzer bereitgestellten Eingangsdaten. Erfinde keine Fakten, Namen, Zahlen oder Zitate, die nicht darin vorkommen.",
     "Du kannst KEINE Aktionen in fremden Systemen ausführen (keine E-Mails wirklich versenden, nichts posten, nichts in Kalender oder CRM schreiben). Behaupte niemals, so etwas getan zu haben – liefere das Ergebnis als fertigen Entwurf, den der Nutzer selbst verwendet.",
     "Antworte strukturiert und auf Deutsch.",
-  ].join(" ");
+  ].join(" ") + (expertise?.trim() ? `\n\n${expertise.trim().slice(0, 12000)}` : "");
 
   const goal = wf.instruction?.trim()
     ? `Auftrag des Nutzers (genau und vollständig umsetzen):\n"""\n${wf.instruction.trim().slice(0, 4000)}\n"""`
@@ -128,8 +128,8 @@ async function sendEmail(to: string, subject: string, body: string): Promise<boo
 }
 
 /** Execute one workflow and (optionally) email the result. */
-export async function executeWorkflow(wf: UserWorkflow, input?: string): Promise<RunResult> {
-  const { system, user } = buildPrompt(wf, input);
+export async function executeWorkflow(wf: UserWorkflow, input?: string, expertise?: string): Promise<RunResult> {
+  const { system, user } = buildPrompt(wf, input, expertise);
   const { text, mode } = await runAI(system, user);
 
   let emailSent = false;
