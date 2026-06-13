@@ -233,14 +233,14 @@ export async function POST(req: NextRequest) {
     ? override
     : systemPromptFor(agentId) + graphsSection(graphs) + (expertise ? `\n\n${expertise}` : "");
 
-  // Hard cap: if OpenAI doesn't even start responding in time, fail fast with a
-  // clear message instead of hanging until the platform timeout. `.trim()`
-  // guards against a stray space/newline in a pasted key.
+  // Non-streaming for maximum reliability on the free hosting tier: request the
+  // full (short) answer in one call, guarded by a hard 9s timeout so it can
+  // never hang. `.trim()` guards against a stray space/newline in a pasted key.
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 9000);
-  let upstream: Response;
+  let res: Response;
   try {
-    upstream = await fetch("https://api.openai.com/v1/chat/completions", {
+    res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -248,8 +248,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-        stream: true,
-        // Keep responses within the free plan's ~10s function limit.
+        // Short answer so it finishes well within the free plan's ~10s limit.
         max_tokens: 300,
         messages: [
           { role: "system", content: systemContent },
@@ -261,73 +260,27 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     clearTimeout(timer);
     const aborted = (err as Error)?.name === "AbortError";
-    const msg = aborted
-      ? "⚠️ Zeitüberschreitung: OpenAI hat nicht geantwortet. Das liegt fast immer am OpenAI-Konto – bitte prüfe, ob im Konto (und im jeweiligen Projekt) Guthaben verfügbar ist und die Nutzungslimits nicht auf 0 stehen."
-      : "⚠️ Verbindung zur KI fehlgeschlagen. Bitte in einem Moment erneut versuchen.";
-    return new Response(msg, { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "error" } });
+    return new Response(
+      aborted
+        ? "⚠️ Zeitüberschreitung – die KI hat nicht rechtzeitig geantwortet. Bitte erneut versuchen."
+        : "⚠️ Verbindung zur KI fehlgeschlagen. Bitte in einem Moment erneut versuchen.",
+      { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "error" } },
+    );
   }
-  if (!upstream.ok || !upstream.body) {
-    clearTimeout(timer);
-    const detail = await upstream.text().catch(() => "");
-    return new Response(`⚠️ OpenAI-Fehler ${upstream.status}: ${detail.slice(0, 300)}`, {
+  clearTimeout(timer);
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    return new Response(`⚠️ OpenAI-Fehler ${res.status}: ${detail.slice(0, 300)}`, {
       headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "error" },
     });
   }
 
-  // Transform OpenAI SSE stream into plain text token stream. The abort timer
-  // guards the WHOLE stream: on a long/slow generation we close cleanly with
-  // the partial text instead of hitting the platform's hard function timeout.
-  const reader = upstream.body.getReader();
-  const decoder = new TextDecoder();
-  let sentAny = false;
-  const stream = new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      try {
-        const { done, value } = await reader.read();
-        if (done) {
-          clearTimeout(timer);
-          controller.close();
-          return;
-        }
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:")) continue;
-          const data = trimmed.slice(5).trim();
-          if (data === "[DONE]") continue;
-          try {
-            const json = JSON.parse(data);
-            const token = json.choices?.[0]?.delta?.content;
-            if (token) {
-              controller.enqueue(encoder.encode(token));
-              sentAny = true;
-            }
-          } catch {
-            /* ignore keep-alive / partial lines */
-          }
-        }
-      } catch {
-        // Timed out or stream error: end cleanly (with a note if nothing came yet).
-        clearTimeout(timer);
-        if (!sentAny) {
-          controller.enqueue(encoder.encode("⚠️ Zeitüberschreitung – die Antwort kam nicht rechtzeitig. Bitte kurz warten und erneut versuchen."));
-        }
-        try { controller.close(); } catch { /* already closed */ }
-      }
-    },
-    cancel() {
-      clearTimeout(timer);
-      reader.cancel().catch(() => {});
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "X-Workforce-Mode": "live",
-      // Stream tokens immediately instead of letting a proxy buffer them.
-      "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no",
-    },
+  const json = await res.json().catch(() => null);
+  const text =
+    json?.choices?.[0]?.message?.content?.trim() ||
+    "⚠️ Leere Antwort erhalten – bitte erneut versuchen.";
+  return new Response(text, {
+    headers: { "Content-Type": "text/plain; charset=utf-8", "X-Workforce-Mode": "live" },
   });
 }
