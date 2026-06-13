@@ -59,12 +59,13 @@ export default function SettingsPage() {
   );
 }
 
-function Field({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Field({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
       <input
-        defaultValue={value}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="h-11 w-full rounded-xl border border-border bg-surface-soft/50 px-3.5 text-sm text-ink focus:border-accent/40 focus:bg-surface focus:outline-none"
       />
       {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
@@ -72,7 +73,40 @@ function Field({ label, value, hint }: { label: string; value: string; hint?: st
   );
 }
 
+const WORKSPACE_KEY = "workforce-os:workspace";
+const defaultWorkspace = {
+  company: "Constantin GmbH",
+  domain: "constantin.workforce-os.app",
+  timezone: "Europe/Berlin",
+  language: "Deutsch",
+};
+
 function GeneralTab() {
+  const [ws, setWs] = React.useState(defaultWorkspace);
+  const [saved, setSaved] = React.useState(false);
+
+  // Load persisted workspace settings (kept out of the initial render so the
+  // server-rendered markup matches and there's no hydration mismatch).
+  React.useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WORKSPACE_KEY);
+      if (raw) setWs({ ...defaultWorkspace, ...JSON.parse(raw) });
+    } catch { /* ignore */ }
+  }, []);
+
+  const update = (patch: Partial<typeof defaultWorkspace>) => {
+    setWs((p) => ({ ...p, ...patch }));
+    setSaved(false);
+  };
+
+  function save() {
+    try {
+      window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(ws));
+    } catch { /* ignore */ }
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2000);
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -80,14 +114,15 @@ function GeneralTab() {
           <CardTitle>Workspace</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Field label="Unternehmensname" value="Constantin GmbH" />
-          <Field label="Domain" value="constantin.workforce-os.app" hint="Wird für Team-Einladungen verwendet." />
+          <Field label="Unternehmensname" value={ws.company} onChange={(v) => update({ company: v })} />
+          <Field label="Domain" value={ws.domain} onChange={(v) => update({ domain: v })} hint="Wird für Team-Einladungen verwendet." />
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Zeitzone" value="Europe/Berlin" />
-            <Field label="Sprache" value="Deutsch" />
+            <Field label="Zeitzone" value={ws.timezone} onChange={(v) => update({ timezone: v })} />
+            <Field label="Sprache" value={ws.language} onChange={(v) => update({ language: v })} />
           </div>
-          <div className="flex justify-end">
-            <Button variant="accent" size="sm"><Check className="h-4 w-4" /> Speichern</Button>
+          <div className="flex items-center justify-end gap-3">
+            {saved && <span className="text-sm font-medium text-success">Gespeichert ✓</span>}
+            <Button variant="accent" size="sm" onClick={save}><Check className="h-4 w-4" /> Speichern</Button>
           </div>
         </CardContent>
       </Card>

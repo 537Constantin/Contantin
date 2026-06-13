@@ -25,9 +25,15 @@ export function Sparkline({
   const max = Math.max(...data);
   const min = Math.min(...data);
   const span = max - min || 1;
-  const step = w / (data.length - 1);
-  const pts = data.map((d, i) => [i * step, h - ((d - min) / span) * (h - 4) - 2] as const);
-  const line = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  // Guard against a single data point (step would divide by zero -> NaN path).
+  const step = data.length > 1 ? w / (data.length - 1) : 0;
+  const pts = data.map(
+    (d, i) => [data.length > 1 ? i * step : w / 2, h - ((d - min) / span) * (h - 4) - 2] as const,
+  );
+  const line =
+    data.length > 1
+      ? pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
+      : `M0,${pts[0][1].toFixed(1)} L${w},${pts[0][1].toFixed(1)}`;
   const area = `${line} L${w},${h} L0,${h} Z`;
   const id = React.useId();
   return (
@@ -117,11 +123,15 @@ export function AreaChart({
   const max = Math.max(...values);
   const min = Math.min(...values);
   const span = max - min || 1;
-  const step = (w - pad * 2) / (data.length - 1);
+  // Guard against a single data point (step would divide by zero -> NaN path).
+  const step = data.length > 1 ? (w - pad * 2) / (data.length - 1) : 0;
   const pts = data.map(
-    (d, i) => [pad + i * step, h - pad - ((d.value - min) / span) * (h - pad * 2)] as const,
+    (d, i) => [data.length > 1 ? pad + i * step : w / 2, h - pad - ((d.value - min) / span) * (h - pad * 2)] as const,
   );
-  const line = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const line =
+    data.length > 1
+      ? pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
+      : `M${pad},${pts[0][1].toFixed(1)} L${w - pad},${pts[0][1].toFixed(1)}`;
   const area = `${line} L${w - pad},${h} L${pad},${h} Z`;
   const id = React.useId();
   return (

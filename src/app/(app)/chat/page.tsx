@@ -16,6 +16,22 @@ import type { ChatMessage } from "@/lib/types";
 
 type Attachment = NonNullable<ChatMessage["attachment"]>;
 
+/** Minimal shape of the browser SpeechRecognition API (no DOM lib types). */
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+};
+type SpeechWindow = {
+  SpeechRecognition?: new () => SpeechRecognitionLike;
+  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+};
+
 const suggestions = [
   "Fasse meine Termine für morgen zusammen",
   "Welche Kunden brauchen ein Follow-up?",
@@ -45,6 +61,9 @@ function ChatView() {
   const [attachment, setAttachment] = React.useState<Attachment | null>(null);
   const [fileNote, setFileNote] = React.useState<string | null>(null);
   const [userSpecs, setUserSpecs] = React.useState<UserSpecialization[]>([]);
+  const [listening, setListening] = React.useState(false);
+  const [speechSupported, setSpeechSupported] = React.useState(false);
+  const recognitionRef = React.useRef<SpeechRecognitionLike | null>(null);
 
   const agent = employees.find((e) => e.id === agentId) ?? employees[0];
 
@@ -143,6 +162,46 @@ function ChatView() {
   function stop() {
     abortRef.current?.abort();
     setStreaming(false);
+  }
+
+  // Voice input via the browser's Web Speech API (Chrome/Edge/Safari). Only
+  // shown where it's actually available, so it never looks broken.
+  React.useEffect(() => {
+    const w = window as unknown as SpeechWindow;
+    setSpeechSupported(Boolean(w.SpeechRecognition || w.webkitSpeechRecognition));
+    return () => recognitionRef.current?.stop();
+  }, []);
+
+  function toggleMic() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const w = window as unknown as SpeechWindow;
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "de-DE";
+    rec.interimResults = true;
+    rec.continuous = false;
+    const base = input.trim() ? input.trim() + " " : "";
+    rec.onresult = (e) => {
+      let txt = "";
+      for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      setInput(base + txt);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+    };
+    recognitionRef.current = rec;
+    setListening(true);
+    try {
+      rec.start();
+    } catch {
+      setListening(false);
+    }
   }
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -363,9 +422,22 @@ function ChatView() {
             placeholder={`Nachricht an ${agent.name}…`}
             className="max-h-40 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] text-ink placeholder:text-muted focus:outline-none"
           />
-          <button type="button" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-muted hover:bg-surface-soft hover:text-ink" aria-label="Spracheingabe">
-            <Mic className="h-[18px] w-[18px]" />
-          </button>
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={toggleMic}
+              className={cn(
+                "grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors",
+                listening
+                  ? "bg-danger/10 text-danger animate-pulse-soft"
+                  : "text-muted hover:bg-surface-soft hover:text-ink",
+              )}
+              aria-label={listening ? "Spracheingabe stoppen" : "Spracheingabe starten"}
+              title={listening ? "Höre zu… zum Stoppen klicken" : "Per Sprache diktieren"}
+            >
+              <Mic className="h-[18px] w-[18px]" />
+            </button>
+          )}
           {streaming ? (
             <button
               type="button"

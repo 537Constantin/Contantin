@@ -85,18 +85,33 @@ async function runAI(system: string, user: string): Promise<{ text: string; mode
     return { text, mode: "demo" };
   }
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      max_tokens: 500,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
+  // Hard timeout so a slow call fails with a clear message instead of being
+  // killed by the host (the free plan caps functions at ~10s).
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 9500);
+  let res: Response;
+  try {
+    res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey.trim()}` },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+        max_tokens: 500,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    if ((err as Error)?.name === "AbortError") {
+      throw new Error("Zeitüberschreitung – die KI hat nicht rechtzeitig geantwortet. Bitte erneut versuchen (auf dem kostenlosen Plan sind nur kurze Antworten möglich).");
+    }
+    throw new Error("Verbindung zur KI fehlgeschlagen. Bitte in einem Moment erneut versuchen.");
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new Error(`OpenAI ${res.status}: ${detail.slice(0, 200)}`);
