@@ -11,10 +11,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlowAvatar } from "@/components/ui/glow-avatar";
-import { employees, getEmployee } from "@/lib/data/employees";
+import { useEmployees } from "@/lib/data/user-employees";
 import {
   specializations, type Specialization, type UserSpecialization, type KnowledgeEntry,
 } from "@/lib/data/specializations";
+import type { AIEmployee } from "@/lib/types";
 import { fileToDocument } from "@/lib/files";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 const rid = () => Math.random().toString(36).slice(2, 9);
 
 export default function SpecializationsPage() {
+  const { all: roster } = useEmployees();
   const [userSpecs, setUserSpecs] = React.useState<UserSpecialization[]>([]);
   const [loaded, setLoaded] = React.useState(false);
 
@@ -72,6 +74,7 @@ export default function SpecializationsPage() {
           <SpecCard
             key={spec.id}
             spec={spec}
+            roster={roster}
             userSpec={userSpecs.find((u) => u.id === spec.id)}
             onPatch={patchUserSpec}
           />
@@ -83,10 +86,12 @@ export default function SpecializationsPage() {
 
 function SpecCard({
   spec,
+  roster,
   userSpec,
   onPatch,
 }: {
   spec: Specialization;
+  roster: AIEmployee[];
   userSpec?: UserSpecialization;
   onPatch: (id: string, patch: Partial<UserSpecialization>) => void;
 }) {
@@ -94,7 +99,7 @@ function SpecCard({
   const activated = userSpec?.activated ?? false;
   const custom = userSpec?.customKnowledge ?? [];
   const assignedId = userSpec?.assignedEmployeeId ?? spec.defaultEmployeeId;
-  const assigned = getEmployee(assignedId) ?? employees[0];
+  const assigned = roster.find((e) => e.id === assignedId) ?? roster[0];
   const [showKnowledge, setShowKnowledge] = React.useState(false);
 
   return (
@@ -151,7 +156,7 @@ function SpecCard({
                   className="max-w-[180px] truncate rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-ink focus:border-accent/40 focus:outline-none"
                   aria-label="Mitarbeiter zuweisen"
                 >
-                  {employees.map((e) => (
+                  {roster.map((e) => (
                     <option key={e.id} value={e.id}>{e.name} · {e.roleLabel}</option>
                   ))}
                 </select>

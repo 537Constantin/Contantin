@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Plus, ArrowRight, Search } from "lucide-react";
+import { Plus, ArrowRight, Search, Trash2 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { GlowAvatar } from "@/components/ui/glow-avatar";
@@ -11,8 +11,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { StatusDot } from "@/components/app/status";
 import { CreateEmployeeDialog } from "@/components/app/create-employee-dialog";
-import { employees, roleMeta } from "@/lib/data/employees";
+import { roleMeta } from "@/lib/data/employees";
 import { personalityMeta } from "@/lib/data/employees";
+import { useEmployees, isCustomEmployee } from "@/lib/data/user-employees";
 import { formatNumber, cn } from "@/lib/utils";
 import type { EmployeeRole } from "@/lib/types";
 
@@ -35,6 +36,7 @@ export default function EmployeesPage() {
 
 function EmployeesView() {
   const params = useSearchParams();
+  const { all, add, remove } = useEmployees();
   const [open, setOpen] = React.useState(false);
   const [filter, setFilter] = React.useState<EmployeeRole | "all">("all");
   const [query, setQuery] = React.useState("");
@@ -43,7 +45,7 @@ function EmployeesView() {
     if (params.get("new") === "1") setOpen(true);
   }, [params]);
 
-  const list = employees.filter((e) => {
+  const list = all.filter((e) => {
     const matchRole = filter === "all" || e.role === filter;
     const matchQuery =
       !query ||
@@ -94,14 +96,24 @@ function EmployeesView() {
           <Link
             key={emp.id}
             href={`/employees/${emp.id}`}
-            className="group flex flex-col rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/30 hover:shadow-[var(--shadow-glow)]"
+            className="group relative flex flex-col rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/30 hover:shadow-[var(--shadow-glow)]"
           >
+            {isCustomEmployee(emp.id) && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); remove(emp.id); }}
+                className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-muted opacity-0 transition-opacity hover:bg-surface-soft hover:text-danger group-hover:opacity-100"
+                aria-label={`${emp.name} löschen`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
             <div className="flex items-start gap-3">
               <GlowAvatar name={emp.name} color={emp.avatarColor} size="lg" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
                   <p className="font-display text-lg font-semibold text-ink">{emp.name}</p>
                   <StatusDot status={emp.status} />
+                  {isCustomEmployee(emp.id) && <Badge variant="accent">Eigener</Badge>}
                 </div>
                 <p className="text-sm text-muted">{emp.roleLabel}</p>
               </div>
@@ -152,7 +164,7 @@ function EmployeesView() {
         </button>
       </div>
 
-      <CreateEmployeeDialog open={open} onClose={() => setOpen(false)} />
+      <CreateEmployeeDialog open={open} onClose={() => setOpen(false)} onCreated={add} />
     </PageShell>
   );
 }

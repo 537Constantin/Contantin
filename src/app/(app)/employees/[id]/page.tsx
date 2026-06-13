@@ -1,6 +1,8 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+import { useParams } from "next/navigation";
 import { ArrowLeft, MessageSquare, Settings2, Cpu, Wrench, Brain, Clock } from "lucide-react";
 import { PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,24 +12,35 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatusDot } from "@/components/app/status";
 import { ActivityFeed } from "@/components/app/activity-feed";
-import { getEmployee, employees, personalityMeta } from "@/lib/data/employees";
+import { personalityMeta } from "@/lib/data/employees";
+import { useEmployees, isCustomEmployee } from "@/lib/data/user-employees";
 import { activity } from "@/lib/data/activity";
 import { formatNumber } from "@/lib/utils";
 
-export function generateStaticParams() {
-  return employees.map((e) => ({ id: e.id }));
-}
+export default function EmployeeDetailPage() {
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : "";
+  const { find, loaded } = useEmployees();
+  const emp = find(id);
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const emp = getEmployee(id);
-  return { title: emp ? `${emp.name} – ${emp.roleLabel}` : "Mitarbeiter" };
-}
-
-export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const emp = getEmployee(id);
-  if (!emp) notFound();
+  // Built-in employees resolve instantly; only custom ones need the async load.
+  if (!emp) {
+    if (!loaded && isCustomEmployee(id)) {
+      return (
+        <PageShell>
+          <p className="py-20 text-center text-sm text-muted">Wird geladen…</p>
+        </PageShell>
+      );
+    }
+    return (
+      <PageShell>
+        <Link href="/employees" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+          <ArrowLeft className="h-4 w-4" /> Alle Mitarbeiter
+        </Link>
+        <p className="py-20 text-center text-sm text-muted">Dieser Mitarbeiter wurde nicht gefunden.</p>
+      </PageShell>
+    );
+  }
 
   const feed = activity.filter((a) => a.employeeId === emp.id);
   const stats = [
@@ -50,14 +63,12 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             <div className="flex items-center gap-3">
               <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">{emp.name}</h1>
               <StatusDot status={emp.status} />
+              {isCustomEmployee(emp.id) && <Badge variant="accent">Eigener</Badge>}
             </div>
             <p className="text-muted">{emp.roleLabel} · {personalityMeta[emp.personality]}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Settings2 className="h-4 w-4" /> Konfigurieren
-          </Button>
           <Button variant="accent" size="sm" asChild>
             <Link href={`/chat?agent=${emp.id}`}>
               <MessageSquare className="h-4 w-4" /> Chatten

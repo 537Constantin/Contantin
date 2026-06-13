@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/app/status";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { employees } from "@/lib/data/employees";
+import { useEmployees, agentPersona } from "@/lib/data/user-employees";
 import { loadGraphs } from "@/lib/graphs";
 import { loadItems } from "@/lib/store-sync";
 import { getSpecialization, buildExpertise, type UserSpecialization } from "@/lib/data/specializations";
@@ -49,6 +50,7 @@ export default function ChatPage() {
 
 function ChatView() {
   const params = useSearchParams();
+  const { all: roster } = useEmployees();
   const initialAgent = params.get("agent") ?? employees[0].id;
   const [agentId, setAgentId] = React.useState(initialAgent);
   const [picker, setPicker] = React.useState(false);
@@ -65,7 +67,7 @@ function ChatView() {
   const [speechSupported, setSpeechSupported] = React.useState(false);
   const recognitionRef = React.useRef<SpeechRecognitionLike | null>(null);
 
-  const agent = employees.find((e) => e.id === agentId) ?? employees[0];
+  const agent = roster.find((e) => e.id === agentId) ?? employees[0];
 
   // An unlocked specialization assigned to the current agent gives it expertise.
   React.useEffect(() => {
@@ -124,6 +126,7 @@ function ChatView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           agentId,
+          agent: agentPersona(agent),
           messages: history.map((m) => ({
             role: m.role,
             content: m.attachment?.text
@@ -270,8 +273,8 @@ function ChatView() {
           {picker && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setPicker(false)} />
-              <div className="absolute left-0 top-full z-20 mt-2 w-72 overflow-hidden rounded-2xl border border-border bg-surface p-1.5 shadow-[var(--shadow-float)]">
-                {employees.map((e) => (
+              <div className="absolute left-0 top-full z-20 mt-2 max-h-[60vh] w-72 overflow-y-auto rounded-2xl border border-border bg-surface p-1.5 shadow-[var(--shadow-float)]">
+                {roster.map((e) => (
                   <button
                     key={e.id}
                     onClick={() => {

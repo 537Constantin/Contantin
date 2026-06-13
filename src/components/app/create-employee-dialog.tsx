@@ -5,8 +5,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { X, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { roleMeta, personalityMeta } from "@/lib/data/employees";
+import { buildUserEmployee } from "@/lib/data/user-employees";
 import { cn } from "@/lib/utils";
-import type { EmployeeRole, Personality } from "@/lib/types";
+import type { AIEmployee, EmployeeRole, Personality } from "@/lib/types";
 
 const roles = Object.keys(roleMeta) as EmployeeRole[];
 const personalities = Object.keys(personalityMeta) as Personality[];
@@ -14,9 +15,12 @@ const personalities = Object.keys(personalityMeta) as Personality[];
 export function CreateEmployeeDialog({
   open,
   onClose,
+  onCreated,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Called with the freshly built employee so the page can persist it. */
+  onCreated?: (employee: AIEmployee) => void;
 }) {
   const [step, setStep] = React.useState(0);
   const [role, setRole] = React.useState<EmployeeRole>("secretary");
@@ -36,6 +40,11 @@ export function CreateEmployeeDialog({
 
   const next = () => setStep((s) => Math.min(2, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
+
+  function create() {
+    onCreated?.(buildUserEmployee({ name, role, personality }));
+    setCreated(true);
+  }
 
   return (
     <AnimatePresence>
@@ -174,7 +183,7 @@ export function CreateEmployeeDialog({
                     Weiter
                   </Button>
                 ) : (
-                  <Button variant="accent" size="sm" onClick={() => setCreated(true)}>
+                  <Button variant="accent" size="sm" onClick={create}>
                     <Sparkles className="h-4 w-4" /> Erstellen
                   </Button>
                 )}

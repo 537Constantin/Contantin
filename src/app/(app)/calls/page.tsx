@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { employees, getEmployee } from "@/lib/data/employees";
+import { employees } from "@/lib/data/employees";
+import { useEmployees } from "@/lib/data/user-employees";
 import { loadItems, saveItems } from "@/lib/store-sync";
 import {
   defaultPhoneSettings, voiceOptions, callSystemPrompt, emptyCall, emptyQA,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/phone";
 import { getSpecialization, buildExpertise, type UserSpecialization } from "@/lib/data/specializations";
 import { formatRelativeTime, cn } from "@/lib/utils";
-import type { CallRecord, ChatMessage } from "@/lib/types";
+import type { AIEmployee, CallRecord, ChatMessage } from "@/lib/types";
 
 const outcomeMeta = {
   resolved: { label: "Gelöst", variant: "success" as const, icon: Phone },
@@ -39,6 +40,7 @@ const inputCls =
   "h-10 w-full rounded-lg border border-border bg-surface-soft/50 px-3 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none";
 
 export default function CallsPage() {
+  const { all: roster, find: findEmp } = useEmployees();
   const [settings, setSettings] = React.useState<PhoneSettings | null>(null);
   const [calls, setCalls] = React.useState<CallRecord[]>([]);
   const [specs, setSpecs] = React.useState<UserSpecialization[]>([]);
@@ -65,7 +67,7 @@ export default function CallsPage() {
     if (loaded) void saveItems("call", calls);
   }, [calls, loaded]);
 
-  const agent = (settings && getEmployee(settings.agentId)) || employees[0];
+  const agent = (settings && findEmp(settings.agentId)) || employees[0];
   const scheduled = calls.filter((c) => c.outcome === "scheduled").length;
 
   // An unlocked specialization assigned to the phone agent adds expertise to calls.
@@ -100,6 +102,7 @@ export default function CallsPage() {
       {showSettings && (
         <SettingsPanel
           settings={settings}
+          roster={roster}
           onSave={(s) => { setSettings(s); setShowSettings(false); }}
           onClose={() => setShowSettings(false)}
         />
@@ -152,7 +155,7 @@ export default function CallsPage() {
               </p>
             ) : (
               calls.map((call) => (
-                <CallRow key={call.id} call={call} onChange={updateCall} onRemove={removeCall} />
+                <CallRow key={call.id} call={call} employee={findEmp(call.employeeId)} onChange={updateCall} onRemove={removeCall} />
               ))
             )}
           </CardContent>
@@ -167,8 +170,8 @@ const areaCls =
   "w-full resize-none rounded-lg border border-border bg-surface-soft/50 px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none";
 
 function SettingsPanel({
-  settings, onSave, onClose,
-}: { settings: PhoneSettings; onSave: (s: PhoneSettings) => void; onClose: () => void }) {
+  settings, roster, onSave, onClose,
+}: { settings: PhoneSettings; roster: AIEmployee[]; onSave: (s: PhoneSettings) => void; onClose: () => void }) {
   const [draft, setDraft] = React.useState<PhoneSettings>(settings);
   const set = (patch: Partial<PhoneSettings>) => setDraft((d) => ({ ...d, ...patch }));
 
@@ -195,7 +198,7 @@ function SettingsPanel({
         <div>
           <label className={labelCls}>Wer nimmt Anrufe entgegen?</label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {employees.map((e) => (
+            {roster.map((e) => (
               <button
                 key={e.id}
                 onClick={() => set({ agentId: e.id })}
@@ -501,12 +504,11 @@ function NewCallButton({ agentId, onAdd }: { agentId: string; onAdd: (c: CallRec
 }
 
 function CallRow({
-  call, onChange, onRemove,
-}: { call: CallRecord; onChange: (id: string, patch: Partial<CallRecord>) => void; onRemove: (id: string) => void }) {
+  call, employee: emp, onChange, onRemove,
+}: { call: CallRecord; employee?: AIEmployee; onChange: (id: string, patch: Partial<CallRecord>) => void; onRemove: (id: string) => void }) {
   const [editing, setEditing] = React.useState(call.caller === "Neuer Anruf");
   const om = outcomeMeta[call.outcome];
   const sm = sentimentMeta[call.sentiment];
-  const emp = getEmployee(call.employeeId);
   const OIcon = om.icon;
 
   if (editing) {

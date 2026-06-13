@@ -25,13 +25,20 @@ interface RunResult {
   mode: "live" | "demo";
 }
 
+/** Persona for a user-created employee (built-ins are resolved by id). */
+export interface AgentPersona {
+  name: string;
+  roleLabel: string;
+  description: string;
+}
+
 function stepLabel(type: string): string {
   return type === "trigger" ? "Auslöser" : type === "ai" ? "KI-Schritt" : type === "condition" ? "Bedingung" : "Aktion";
 }
 
 /** Build the instruction the AI follows to execute the workflow. */
-function buildPrompt(wf: UserWorkflow, input?: string, expertise?: string): { system: string; user: string } {
-  const emp = employees.find((e) => e.id === wf.employeeId);
+function buildPrompt(wf: UserWorkflow, input?: string, expertise?: string, agent?: AgentPersona): { system: string; user: string } {
+  const emp = employees.find((e) => e.id === wf.employeeId) ?? agent;
   const persona = emp
     ? `Du bist ${emp.name}, ${emp.roleLabel}. ${emp.description}`
     : "Du bist ein KI-Mitarbeiter.";
@@ -144,8 +151,8 @@ async function sendEmail(to: string, subject: string, body: string): Promise<boo
 }
 
 /** Execute one workflow and (optionally) email the result. */
-export async function executeWorkflow(wf: UserWorkflow, input?: string, expertise?: string): Promise<RunResult> {
-  const { system, user } = buildPrompt(wf, input, expertise);
+export async function executeWorkflow(wf: UserWorkflow, input?: string, expertise?: string, agent?: AgentPersona): Promise<RunResult> {
+  const { system, user } = buildPrompt(wf, input, expertise, agent);
   const { text, mode } = await runAI(system, user);
 
   let emailSent = false;

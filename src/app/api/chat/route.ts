@@ -44,12 +44,34 @@ function demoSchedule(graph: Graph) {
     .join("\n");
 }
 
-function systemPromptFor(agentId?: string) {
-  const emp = employees.find((e) => e.id === agentId);
+interface AgentPersona {
+  name: string;
+  roleLabel: string;
+  description: string;
+  skills: string[];
+  personality: string;
+}
+
+function toneFor(personality?: string) {
+  return personality === "concise"
+    ? "knapp und effizient"
+    : personality === "empathetic"
+    ? "empathisch und geduldig"
+    : personality === "friendly"
+    ? "freundlich und nahbar"
+    : personality === "visionary"
+    ? "strategisch und visionär"
+    : "professionell und präzise";
+}
+
+/** Persona for the chat. Built-in employees are looked up by id; user-created
+ * employees pass their details via `agent` (they don't exist server-side). */
+function systemPromptFor(agentId?: string, agent?: AgentPersona) {
+  const emp = employees.find((e) => e.id === agentId) ?? agent;
   if (!emp) {
     return "Du bist AI Workforce OS, ein Team aus spezialisierten KI-Mitarbeitern. Antworte professionell, präzise und auf Deutsch. Hilf bei Organisation, Support, Beratung und Automatisierung. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.";
   }
-  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei AI Workforce OS. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${emp.personality === "concise" ? "knapp und effizient" : emp.personality === "empathetic" ? "empathisch und geduldig" : emp.personality === "friendly" ? "freundlich und nahbar" : emp.personality === "visionary" ? "strategisch und visionär" : "professionell und präzise"} auf Deutsch. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.`;
+  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei AI Workforce OS. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${toneFor(emp.personality)} auf Deutsch. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.`;
 }
 
 /** Stream a string token-by-token as Server-Sent-Event-like chunks. */
@@ -191,6 +213,8 @@ export async function POST(req: NextRequest) {
   let body: {
     messages?: IncomingMessage[];
     agentId?: string;
+    /** Persona for a user-created employee (built-ins are resolved by id). */
+    agent?: AgentPersona;
     graphs?: Graph[];
     mode?: string;
     systemPrompt?: string;
@@ -231,7 +255,7 @@ export async function POST(req: NextRequest) {
 
   const systemContent = override
     ? override
-    : systemPromptFor(agentId) + graphsSection(graphs) + (expertise ? `\n\n${expertise}` : "");
+    : systemPromptFor(agentId, body.agent) + graphsSection(graphs) + (expertise ? `\n\n${expertise}` : "");
 
   // Non-streaming for maximum reliability on the free hosting tier: request the
   // full (short) answer in one call, guarded by a hard 9s timeout so it can

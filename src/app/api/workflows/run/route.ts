@@ -6,7 +6,7 @@
  * keeps the endpoint simple and works in demo mode (no DB) too.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { executeWorkflow } from "@/lib/workflow-engine";
+import { executeWorkflow, type AgentPersona } from "@/lib/workflow-engine";
 import type { UserWorkflow } from "@/lib/workflows-store";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  let body: { workflow?: UserWorkflow; input?: string; expertise?: string };
+  let body: { workflow?: UserWorkflow; input?: string; expertise?: string; agent?: AgentPersona };
   try {
     body = await req.json();
   } catch {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const expertise = typeof body.expertise === "string" ? body.expertise.slice(0, 14000) : undefined;
   try {
-    const result = await executeWorkflow(wf, body.input, expertise);
+    const result = await executeWorkflow(wf, body.input, expertise, body.agent);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     return NextResponse.json(

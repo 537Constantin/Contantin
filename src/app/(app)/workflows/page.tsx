@@ -11,7 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlowAvatar } from "@/components/ui/glow-avatar";
-import { employees, getEmployee } from "@/lib/data/employees";
+import { employees } from "@/lib/data/employees";
+import { useEmployees, agentPersona } from "@/lib/data/user-employees";
 import {
   workflowCatalog, catalogCategories,
   type WorkflowCategory,
@@ -19,7 +20,7 @@ import {
 import { loadItems, saveItems } from "@/lib/store-sync";
 import type { UserWorkflow, WorkflowRun } from "@/lib/workflows-store";
 import { getSpecialization, buildExpertise, type UserSpecialization } from "@/lib/data/specializations";
-import type { WorkflowStep } from "@/lib/types";
+import type { AIEmployee, WorkflowStep } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
 
 const rid = () => Math.random().toString(36).slice(2, 9);
@@ -66,6 +67,7 @@ function toDisplay(w: UserWorkflow): DisplayWorkflow {
 }
 
 export default function WorkflowsPage() {
+  const { all: roster, find: findEmp } = useEmployees();
   const [runs, setRuns] = React.useState<WorkflowRun[]>([]);
   const [custom, setCustom] = React.useState<UserWorkflow[]>([]);
   const [specs, setSpecs] = React.useState<UserSpecialization[]>([]);
@@ -119,12 +121,14 @@ export default function WorkflowsPage() {
     };
     const sp = specForEmployee(w.employeeId);
     const expertise = sp ? buildExpertise(sp.spec, sp.custom) : undefined;
+    const emp = findEmp(w.employeeId);
+    const agent = emp ? agentPersona(emp) : undefined;
     let run: WorkflowRun;
     try {
       const res = await fetch("/api/workflows/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workflow: wf, input, expertise }),
+        body: JSON.stringify({ workflow: wf, input, expertise, agent }),
       });
       const data = (await res.json().catch(() => null)) as
         | { ok?: boolean; output?: string; emailSent?: boolean; mode?: "live" | "demo"; error?: string }
@@ -250,7 +254,7 @@ export default function WorkflowsPage() {
       {/* Creator */}
       {creating && (
         <div className="mt-4">
-          <WorkflowCreator onCreate={createCustom} onCancel={() => setCreating(false)} />
+          <WorkflowCreator roster={roster} onCreate={createCustom} onCancel={() => setCreating(false)} />
         </div>
       )}
 
@@ -260,6 +264,7 @@ export default function WorkflowsPage() {
           <WorkflowCard
             key={w.id}
             workflow={w}
+            employee={findEmp(w.employeeId) ?? roster[0]}
             runs={runs.filter((r) => r.workflowId === w.id)}
             onRun={runWorkflow}
             onDelete={w.custom ? () => deleteCustom(w.id) : undefined}
@@ -296,9 +301,11 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function WorkflowCreator({
+  roster,
   onCreate,
   onCancel,
 }: {
+  roster: AIEmployee[];
   onCreate: (d: { name: string; employeeId: string; category: WorkflowCategory; instruction: string; inputLabel: string }) => void;
   onCancel: () => void;
 }) {
@@ -343,7 +350,7 @@ function WorkflowCreator({
               onChange={(e) => setEmployeeId(e.target.value)}
               className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm font-medium text-ink focus:border-accent/40 focus:outline-none"
             >
-              {employees.map((e) => (
+              {roster.map((e) => (
                 <option key={e.id} value={e.id}>{e.name} · {e.roleLabel}</option>
               ))}
             </select>
@@ -403,18 +410,19 @@ function WorkflowCreator({
 
 function WorkflowCard({
   workflow: w,
+  employee: emp,
   runs,
   onRun,
   onDelete,
   specName,
 }: {
   workflow: DisplayWorkflow;
+  employee: AIEmployee;
   runs: WorkflowRun[];
   onRun: (w: DisplayWorkflow, input: string, notifyEmail?: string) => Promise<WorkflowRun>;
   onDelete?: () => void;
   specName?: string;
 }) {
-  const emp = getEmployee(w.employeeId) ?? employees[0];
   const Icon = w.icon;
   const [open, setOpen] = React.useState(false);
   const [input, setInput] = React.useState("");

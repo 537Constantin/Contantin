@@ -3,28 +3,35 @@
 import * as React from "react";
 import { Users, Play, Wand2, GraduationCap, type LucideIcon } from "lucide-react";
 import { employees } from "@/lib/data/employees";
+import { loadUserEmployees } from "@/lib/data/user-employees";
 import { loadItems } from "@/lib/store-sync";
 import type { UserWorkflow, WorkflowRun } from "@/lib/workflows-store";
 import type { UserSpecialization } from "@/lib/data/specializations";
 
 /** Real, per-user dashboard numbers (no fabricated metrics). */
 export function LiveStats() {
-  const [s, setS] = React.useState<{ runs: number; custom: number; specs: number } | null>(null);
+  const [s, setS] = React.useState<{ team: number; runs: number; custom: number; specs: number } | null>(null);
 
   React.useEffect(() => {
     Promise.all([
       loadItems<WorkflowRun>("run"),
       loadItems<UserWorkflow>("workflow"),
       loadItems<UserSpecialization>("specialization"),
+      loadUserEmployees(),
     ])
-      .then(([runs, ws, sp]) =>
-        setS({ runs: runs.length, custom: ws.length, specs: sp.filter((x) => x.activated).length }),
+      .then(([runs, ws, sp, emps]) =>
+        setS({
+          team: employees.length + emps.length,
+          runs: runs.length,
+          custom: ws.length,
+          specs: sp.filter((x) => x.activated).length,
+        }),
       )
-      .catch(() => setS({ runs: 0, custom: 0, specs: 0 }));
+      .catch(() => setS({ team: employees.length, runs: 0, custom: 0, specs: 0 }));
   }, []);
 
   const items: { label: string; value: React.ReactNode; icon: LucideIcon; hint: string }[] = [
-    { label: "KI-Mitarbeiter", value: employees.length, icon: Users, hint: "in deinem Team" },
+    { label: "KI-Mitarbeiter", value: s?.team ?? employees.length, icon: Users, hint: "in deinem Team" },
     { label: "Workflow-Ausführungen", value: s?.runs ?? "—", icon: Play, hint: "gespeicherte Läufe" },
     { label: "Eigene Buttons", value: s?.custom ?? "—", icon: Wand2, hint: "selbst erstellt" },
     { label: "Aktive Spezialisierungen", value: s?.specs ?? "—", icon: GraduationCap, hint: "freigeschaltet" },
