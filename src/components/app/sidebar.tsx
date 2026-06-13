@@ -78,10 +78,14 @@ function Brand() {
   );
 }
 
-function WorkspaceSwitcher() {
+function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="px-3 pb-3">
-      <button className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface-soft/60 px-3 py-2.5 text-left transition-colors hover:border-accent/30">
+      <Link
+        href="/settings"
+        onClick={onNavigate}
+        className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface-soft/60 px-3 py-2.5 text-left transition-colors hover:border-accent/30"
+      >
         <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-xs font-bold text-canvas">
           CW
         </span>
@@ -90,7 +94,7 @@ function WorkspaceSwitcher() {
           <span className="block truncate text-xs text-muted">Enterprise · 5 Agenten</span>
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted" />
-      </button>
+      </Link>
     </div>
   );
 }
@@ -98,7 +102,7 @@ function WorkspaceSwitcher() {
 const SidebarInner = ({ onNavigate }: { onNavigate?: () => void }) => (
   <div className="flex h-full flex-col">
     <Brand />
-    <WorkspaceSwitcher />
+    <WorkspaceSwitcher onNavigate={onNavigate} />
     <NavLinks onNavigate={onNavigate} />
     <div className="border-t border-border p-3">
       <Button asChild variant="accent" size="sm" className="w-full">

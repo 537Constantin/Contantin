@@ -19,7 +19,7 @@ import { clerkEnabled } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ALLOWED = new Set(["workflow", "document", "graph", "call", "phone", "run", "specialization", "employee"]);
+const ALLOWED = new Set(["workflow", "document", "graph", "call", "phone", "run", "specialization", "employee", "member"]);
 
 interface Item {
   id: string;

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { TrendingUp, Gauge, ShieldAlert, PiggyBank, Lightbulb, Download } from "lucide-react";
+import Link from "next/link";
+import { TrendingUp, Gauge, ShieldAlert, PiggyBank, Lightbulb, Sparkles } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/app/kpi-card";
 import { AreaChart, BarChart, Donut } from "@/components/app/charts";
+import { ExportReportButton } from "@/components/app/export-report-button";
 import { kpis, revenueSeries, throughput, workloadSplit, insights } from "@/lib/data/analytics";
 import type { Insight } from "@/lib/types";
 
@@ -27,9 +29,7 @@ export default function AnalyticsPage() {
         title="Analytics & KI-Beratung"
         description="Marcus, dein KI-Unternehmensberater, analysiert deine Daten laufend und liefert umsetzbare Handlungsempfehlungen."
       >
-        <Button variant="outline" size="sm">
-          <Download className="h-4 w-4" /> Report exportieren
-        </Button>
+        <ExportReportButton kpis={kpis} insights={insights} />
       </PageHeader>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -105,8 +105,15 @@ function InsightCard({ insight }: { insight: Insight }) {
           <p className="mt-1 text-sm leading-relaxed text-ink-soft">{insight.recommendation}</p>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button variant="accent" size="sm">Umsetzen</Button>
-          <Button variant="ghost" size="sm">Details</Button>
+          <Button asChild variant="accent" size="sm">
+            <Link
+              href={`/chat?agent=emp-marcus&prompt=${encodeURIComponent(
+                `Hilf mir, diese Empfehlung umzusetzen: „${insight.title}". Situation: ${insight.summary} Empfehlung: ${insight.recommendation} Erstelle mir einen konkreten Umsetzungsplan.`,
+              )}`}
+            >
+              <Sparkles className="h-4 w-4" /> Mit Marcus umsetzen
+            </Link>
+          </Button>
         </div>
       </CardContent>
     </Card>
