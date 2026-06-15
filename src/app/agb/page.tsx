@@ -21,9 +21,17 @@ export default function AgbPage() {
 
       <LegalSection title="§ 2 Vertragsgegenstand und Leistungen">
         <p>
-          Der Dienst stellt KI-gestützte Assistenten und Automatisierungen bereit (z. B. Chat, Workflows,
-          Spezialisierungen, Dokumentenverarbeitung). Der konkrete Leistungsumfang ergibt sich aus der
-          jeweils gewählten Leistungsbeschreibung.
+          Der Dienst stellt KI-gestützte Assistenten und Automatisierungen bereit. Dazu gehören insbesondere:
+          ein Chat mit konfigurierbaren KI-Mitarbeitern, ausführbare Workflows, fachliche Spezialisierungen
+          (Wissenspakete), die Analyse hochgeladener Dokumente, ein Diagramm-Generator, ein Telefon-Assistent
+          sowie Team- und Mitarbeiterverwaltung. Der konkrete Leistungsumfang ergibt sich aus der jeweils
+          gewählten Leistungsbeschreibung und dem aktuellen Funktionsstand der Anwendung.
+        </p>
+        <p>
+          <strong>Hinweis zum aktuellen Funktionsstand:</strong> Einzelne Funktionen können je nach
+          Konfiguration als Demo bereitgestellt sein. Insbesondere ist der Telefon-Assistent derzeit eine
+          textbasierte Testumgebung (Simulator) und nimmt keine echten Anrufe entgegen; echte Zahlungen,
+          Anmeldung und E-Mail-Versand sind nur bei entsprechend aktivierten Diensten verfügbar.
         </p>
         <p>
           <strong>Hinweis zu KI-Ergebnissen:</strong> Die vom Dienst erzeugten Ausgaben werden automatisiert

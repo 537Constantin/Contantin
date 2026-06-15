@@ -20,5 +20,5 @@ export const legal = {
   registerCourt: "", // z. B. "Amtsgericht Friedberg (Hessen)"
   registerNumber: "", // z. B. "HRB 12345"
   contentResponsible: "Konstantin König",
-  lastUpdated: "12. Juni 2026",
+  lastUpdated: "15. Juni 2026",
 } as const;
