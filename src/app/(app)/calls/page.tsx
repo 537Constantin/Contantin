@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { AiDisclaimer } from "@/components/app/ai-disclaimer";
 import { employees } from "@/lib/data/employees";
 import { useEmployees } from "@/lib/data/user-employees";
 import { loadItems, saveItems } from "@/lib/store-sync";
@@ -488,6 +489,7 @@ function CallSimulator({ settings, agentName, expertise }: { settings: PhoneSett
             <button onClick={reset} className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-ink">
               <RotateCcw className="h-3 w-3" /> Gespräch zurücksetzen
             </button>
+            <AiDisclaimer className="mt-2" text="Simulation – KI-Antworten können Fehler enthalten." />
           </>
         )}
       </CardContent>

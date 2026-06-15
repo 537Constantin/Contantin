@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/app/kpi-card";
 import { AreaChart, BarChart, Donut } from "@/components/app/charts";
 import { ExportReportButton } from "@/components/app/export-report-button";
+import { AiDisclaimer } from "@/components/app/ai-disclaimer";
 import { kpis, revenueSeries, throughput, workloadSplit, insights } from "@/lib/data/analytics";
 import type { Insight } from "@/lib/types";
 
@@ -73,6 +74,7 @@ export default function AnalyticsPage() {
         <h2 className="font-display text-xl font-semibold tracking-tight text-ink">Handlungsempfehlungen</h2>
         <Badge variant="accent">{insights.length} neu</Badge>
       </div>
+      <AiDisclaimer className="mt-1.5" text="KI-generierte Empfehlungen – können Fehler enthalten, bitte eigenständig prüfen." />
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {insights.map((ins) => (

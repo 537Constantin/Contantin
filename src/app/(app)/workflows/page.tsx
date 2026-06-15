@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlowAvatar } from "@/components/ui/glow-avatar";
+import { AiDisclaimer } from "@/components/app/ai-disclaimer";
 import { employees } from "@/lib/data/employees";
 import { useEmployees, agentPersona } from "@/lib/data/user-employees";
 import {
@@ -602,6 +603,7 @@ function ResultBlock({ run }: { run: WorkflowRun }) {
         )}
       </div>
       <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-soft">{run.output}</p>
+      {ok && run.mode !== "demo" && <AiDisclaimer className="mt-2.5" />}
     </div>
   );
 }
