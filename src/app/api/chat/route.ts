@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { employees } from "@/lib/data/employees";
 
-export const runtime = "edge";
+// Node runtime so we can extend the function timeout (Hobby allows up to 60s).
+// New OpenAI accounts often have low initial rate limits where the first
+// streamed chunk takes >25s, which kills an Edge function. 60s is comfortable.
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 interface IncomingMessage {
   role: "user" | "assistant" | "system";
