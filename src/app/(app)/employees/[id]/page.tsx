@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowLeft, MessageSquare, Settings2, Cpu, Wrench, Brain, Clock } from "lucide-react";
+import { ArrowLeft, MessageSquare, Settings2, Cpu, Wrench, Brain, Clock, Target, ShieldCheck, Zap, Gauge } from "lucide-react";
 import { PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatusDot } from "@/components/app/status";
 import { ActivityFeed } from "@/components/app/activity-feed";
-import { getEmployee, employees, personalityMeta } from "@/lib/data/employees";
+import { getEmployee, employees, personalityMeta, autonomyMeta } from "@/lib/data/employees";
 import { activity } from "@/lib/data/activity";
 import { formatNumber } from "@/lib/utils";
 
@@ -107,6 +107,66 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Auftrag & Verhalten</CardTitle>
+              <Badge variant="accent">
+                <Gauge className="h-3 w-3" />
+                {autonomyMeta[emp.autonomy].label}
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-ink">
+                  <Target className="h-4 w-4 text-accent" /> Auftrag
+                </p>
+                <p className="text-sm leading-relaxed text-ink-soft">{emp.objective}</p>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-sm font-medium text-ink">Verantwortungsbereiche</p>
+                  <ul className="space-y-1.5 text-sm text-ink-soft">
+                    {emp.responsibilities.map((r) => (
+                      <li key={r} className="flex gap-2">
+                        <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent" />
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-ink">
+                    <ShieldCheck className="h-4 w-4 text-danger" /> Leitplanken
+                  </p>
+                  <ul className="space-y-1.5 text-sm text-ink-soft">
+                    {emp.guardrails.map((g) => (
+                      <li key={g} className="flex gap-2">
+                        <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-danger" />
+                        <span>{g}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-ink">
+                  <Zap className="h-4 w-4 text-warning" /> Wird aktiv bei
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {emp.triggers.map((t) => (
+                    <Badge key={t} variant="warning">{t}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              <p className="rounded-xl border border-border bg-surface-soft/50 p-3 text-xs text-muted">
+                {autonomyMeta[emp.autonomy].description}
+              </p>
             </CardContent>
           </Card>
 

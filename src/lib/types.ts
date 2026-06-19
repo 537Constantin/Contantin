@@ -16,6 +16,13 @@ export type EmployeeRole =
 
 export type Personality = "professional" | "friendly" | "concise" | "empathetic" | "visionary";
 
+/**
+ * How autonomously an employee acts. `suggest` = nur Vorschläge,
+ * `approve` = handelt selbst, holt Freigabe für Wichtiges,
+ * `autonomous` = handelt ohne Rückfrage in seinem Verantwortungsbereich.
+ */
+export type Autonomy = "suggest" | "approve" | "autonomous";
+
 export interface AIEmployee {
   id: string;
   name: string;
@@ -37,6 +44,18 @@ export interface AIEmployee {
   /** Hours of human work saved this period */
   hoursSaved: number;
   createdAt: string;
+  /** Wofür dieser Mitarbeiter eingestellt wurde – sein klarer Auftrag. */
+  objective: string;
+  /** Verantwortungsbereiche – wofür er zuständig ist. */
+  responsibilities: string[];
+  /** Was er ausdrücklich NICHT tut (Leitplanken). */
+  guardrails: string[];
+  /** Wann er von sich aus aktiv wird. */
+  triggers: string[];
+  /** Wie autonom er handelt. */
+  autonomy: Autonomy;
+  /** Wie er Updates signiert. */
+  signature: string;
 }
 
 export type ActivityKind =

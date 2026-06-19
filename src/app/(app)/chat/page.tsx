@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
 
 const suggestions = [
-  "Fasse meine Termine für morgen zusammen",
-  "Welche Kunden brauchen ein Follow-up?",
-  "Erstelle einen Report über offene Tickets",
-  "Wo verlieren wir die meisten Leads?",
+  "Bereite mir das Briefing für morgen früh vor",
+  "Übernimm die Follow-ups, die heute fällig sind",
+  "Sieh dir die offenen Tickets an und sag mir, wo's brennt",
+  "Such die größten Lecks in unserer Pipeline",
 ];
 
 export default function ChatPage() {
@@ -173,10 +173,10 @@ function ChatView() {
                 <Sparkles className="h-8 w-8 text-canvas" />
               </span>
               <h2 className="mt-5 font-display text-2xl font-semibold text-ink">
-                Wie kann {agent.name} dir helfen?
+                Was soll {agent.name} übernehmen?
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted">
-                Stelle eine Frage oder delegiere eine Aufgabe. {agent.name} hat Zugriff auf Gedächtnis, Tools und deine Daten.
+                Delegiere wie an einen Kollegen. {agent.name} kennt seinen Auftrag, hat Zugriff auf Tools und Gedächtnis – und meldet sich mit Ergebnissen, nicht mit Rückfragen.
               </p>
               <div className="mt-6 grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
                 {suggestions.map((s) => (

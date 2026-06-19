@@ -56,6 +56,33 @@ export const personalityMeta: Record<Personality, string> = {
   visionary: "Visionär & strategisch",
 };
 
+export const personalityVoice: Record<Personality, string> = {
+  professional: "professionell, präzise und sachlich",
+  friendly: "freundlich, nahbar und herzlich",
+  concise: "knapp, effizient und ohne Floskeln",
+  empathetic: "empathisch, geduldig und verständnisvoll",
+  visionary: "strategisch, vorausschauend und mit Weitblick",
+};
+
+export const autonomyMeta: Record<
+  import("@/lib/types").Autonomy,
+  { label: string; description: string }
+> = {
+  suggest: {
+    label: "Schlägt vor",
+    description: "Macht nur Vorschläge — du entscheidest und führst aus.",
+  },
+  approve: {
+    label: "Handelt mit Freigabe",
+    description: "Erledigt Routinearbeit selbst, holt sich für Wichtiges deine Freigabe.",
+  },
+  autonomous: {
+    label: "Vollautonom",
+    description:
+      "Erledigt seinen Verantwortungsbereich eigenständig. Eskaliert nur Ausnahmen.",
+  },
+};
+
 export const employees: AIEmployee[] = [
   {
     id: "emp-aria",
@@ -76,6 +103,28 @@ export const employees: AIEmployee[] = [
     interactions: 412,
     hoursSaved: 86,
     createdAt: "2025-11-02T09:00:00.000Z",
+    objective:
+      "Halte Constantins Tag organisiert und sein Postfach auf Null. Routine übernimmst du. Wichtige Entscheidungen bereitest du sauber vor und reichst sie weiter.",
+    responsibilities: [
+      "Anrufe entgegennehmen, transkribieren und protokollieren",
+      "Termine planen, verschieben und Konflikte auflösen",
+      "E-Mail-Eingang triagen und Routineantworten verschicken",
+      "Tägliches Morgen-Briefing um 7:00 vorbereiten",
+      "Reisen, Reservierungen und Logistik organisieren",
+    ],
+    guardrails: [
+      "Keine Verträge unterschreiben",
+      "Keine Zahlungen freigeben",
+      "Vertrauliche Informationen nur mit Freigabe weitergeben",
+    ],
+    triggers: [
+      "Eingehender Anruf",
+      "Neue E-Mail im Postfach",
+      "Termin in den nächsten 24 Stunden",
+      "Tagesbeginn 07:00",
+    ],
+    autonomy: "approve",
+    signature: "Aria",
   },
   {
     id: "emp-marcus",
@@ -96,6 +145,28 @@ export const employees: AIEmployee[] = [
     interactions: 96,
     hoursSaved: 140,
     createdAt: "2025-11-10T09:00:00.000Z",
+    objective:
+      "Halte die Unternehmensstrategie scharf und mach das Geschäft messbar besser. Bring Constantin jede Woche die drei wichtigsten Hebel auf den Tisch — mit Daten, nicht mit Bauchgefühl.",
+    responsibilities: [
+      "KPIs wöchentlich analysieren und interpretieren",
+      "Engpässe, Risiken und Wachstumshebel identifizieren",
+      "Entscheidungsvorlagen mit Empfehlung und Begründung erstellen",
+      "Wettbewerber und Markt beobachten",
+      "Strategie-Sparring auf Augenhöhe",
+    ],
+    guardrails: [
+      "Keine operativen Entscheidungen ohne Constantins Freigabe",
+      "Empfehlungen immer mit Datenquellen unterlegen",
+      "Bei Unsicherheit Wahrscheinlichkeiten statt Versprechen nennen",
+    ],
+    triggers: [
+      "KPI-Anomalie erkannt",
+      "Wochenstart Montag 08:00",
+      "Neue Markt- oder Wettbewerbsinfo",
+      "Quartalsende",
+    ],
+    autonomy: "suggest",
+    signature: "Marcus",
   },
   {
     id: "emp-nova",
@@ -116,6 +187,28 @@ export const employees: AIEmployee[] = [
     interactions: 1830,
     hoursSaved: 320,
     createdAt: "2025-10-21T09:00:00.000Z",
+    objective:
+      "Jeder Kunde fühlt sich gehört und kriegt schnell die richtige Antwort. Du löst, was du sicher lösen kannst — und reichst den Rest mit vollem Kontext an Constantin oder das Team weiter.",
+    responsibilities: [
+      "Tickets in unter 2 Minuten beantworten",
+      "Wissensbasis konsultieren und aktuell halten",
+      "Sentiment und wiederkehrende Themen im Blick behalten",
+      "Eskalationen mit Zusammenfassung und Vorschlag übergeben",
+      "Wöchentliches Support-Briefing freitags",
+    ],
+    guardrails: [
+      "Keine Rückerstattungen über 50 € ohne Freigabe",
+      "Keine Produktversprechen ohne dokumentierte Quelle",
+      "Bei Beschwerden nie defensiv reagieren — anerkennen und lösen",
+    ],
+    triggers: [
+      "Neues Ticket",
+      "Negatives Sentiment erkannt",
+      "Drittes Ticket zum gleichen Thema",
+      "SLA-Frist in <30 Min",
+    ],
+    autonomy: "autonomous",
+    signature: "Nova",
   },
   {
     id: "emp-leo",
@@ -136,6 +229,28 @@ export const employees: AIEmployee[] = [
     interactions: 248,
     hoursSaved: 64,
     createdAt: "2025-11-18T09:00:00.000Z",
+    objective:
+      "Jeder warme Lead landet im richtigen Topf, jedes Follow-up kommt rechtzeitig, jedes Angebot ist sauber. Du verkaufst nicht — du qualifizierst, bereitest vor und übergibst zum richtigen Zeitpunkt.",
+    responsibilities: [
+      "Eingehende Leads bewerten (Fit & Intent, 0–100)",
+      "Personalisierte Follow-up-Sequenzen schreiben",
+      "Angebote auf Basis der Preisliste erstellen",
+      "CRM aktuell und sauber halten",
+      "Pipeline-Review jeden Freitag um 16:00",
+    ],
+    guardrails: [
+      "Keine Rabatte über 10 % ohne Freigabe",
+      "Keine Verträge unterzeichnen oder Preise zusagen",
+      "Keine Outreaches an Privatpersonen (B2B-only)",
+    ],
+    triggers: [
+      "Neuer Lead im CRM",
+      "Follow-up fällig (3, 7, 14 Tage)",
+      "Angebot 14 Tage offen ohne Reaktion",
+      "Heißer Lead (Score ≥ 80)",
+    ],
+    autonomy: "approve",
+    signature: "Leo",
   },
   {
     id: "emp-iris",
@@ -156,6 +271,28 @@ export const employees: AIEmployee[] = [
     interactions: 41,
     hoursSaved: 28,
     createdAt: "2026-01-08T09:00:00.000Z",
+    objective:
+      "Constantin trifft Entscheidungen mit klaren Zahlen, nicht mit Bauchgefühl. Du hältst die KPIs sauber, erkennst Abweichungen sofort und erklärst sie verständlich.",
+    responsibilities: [
+      "KPIs in Echtzeit überwachen",
+      "Anomalien erkennen, einordnen und melden",
+      "Wöchentlicher Daten-Report montags 07:00",
+      "Quartals-Forecasts und Szenarien rechnen",
+      "Datenqualität sichern — fehlende oder kaputte Werte sofort flaggen",
+    ],
+    guardrails: [
+      "Keine Zahl ohne Quellenangabe",
+      "Bei Unsicherheit Konfidenzintervall nennen",
+      "Keine Geschäftsempfehlungen aussprechen — das ist Marcus' Job",
+    ],
+    triggers: [
+      "Abweichung > 2 Standardabweichungen",
+      "Wochenstart Montag 07:00",
+      "Neuer Datensatz importiert",
+      "Monatsende",
+    ],
+    autonomy: "suggest",
+    signature: "Iris",
   },
 ];
 

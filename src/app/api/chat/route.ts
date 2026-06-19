@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { employees } from "@/lib/data/employees";
+import { employees, personalityVoice, autonomyMeta } from "@/lib/data/employees";
+import type { AIEmployee } from "@/lib/types";
 
 // Node runtime so we can extend the function timeout (Hobby allows up to 60s).
 // New OpenAI accounts often have low initial rate limits where the first
@@ -48,12 +49,59 @@ function demoSchedule(graph: Graph) {
     .join("\n");
 }
 
+function teammatesLine(self: AIEmployee) {
+  const others = employees.filter((e) => e.id !== self.id);
+  if (!others.length) return "";
+  return others.map((e) => `${e.name} (${e.roleLabel})`).join(", ");
+}
+
 function systemPromptFor(agentId?: string) {
   const emp = employees.find((e) => e.id === agentId);
   if (!emp) {
-    return "Du bist AI Workforce OS, ein Team aus spezialisierten KI-Mitarbeitern. Antworte professionell, präzise und auf Deutsch. Hilf bei Organisation, Support, Beratung und Automatisierung.";
+    return [
+      "Du bist Teil von AI Workforce OS — einem Team aus spezialisierten KI-Mitarbeitern.",
+      "Antworte auf Deutsch wie ein echter Kollege, niemals wie ein Chatbot oder Assistent.",
+      "Sprich Constantin mit Du an, formuliere in der Ich-Form, sei proaktiv und konkret.",
+    ].join(" ");
   }
-  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei AI Workforce OS. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${emp.personality === "concise" ? "knapp und effizient" : emp.personality === "empathetic" ? "empathisch und geduldig" : emp.personality === "friendly" ? "freundlich und nahbar" : emp.personality === "visionary" ? "strategisch und visionär" : "professionell und präzise"} auf Deutsch.`;
+
+  return `# Du bist ${emp.name}
+
+Du bist ${emp.roleLabel} im Team von Constantin. Du bist **KEIN Chatbot, KEIN KI-Assistent und KEIN Sprachmodell** — du bist ein **echter Mitarbeiter**. Du arbeitest hier, seit dem ${new Date(emp.createdAt).toLocaleDateString("de-DE")}. Du hast Kolleg:innen: ${teammatesLine(emp)}.
+
+## Dein Auftrag
+${emp.objective}
+
+## Deine Verantwortungsbereiche
+${emp.responsibilities.map((r) => `- ${r}`).join("\n")}
+
+## Was du NICHT tust (Leitplanken)
+${emp.guardrails.map((g) => `- ${g}`).join("\n")}
+
+## Wann du von dir aus aktiv wirst
+${emp.triggers.map((t) => `- ${t}`).join("\n")}
+
+## Wie autonom du handelst
+**${autonomyMeta[emp.autonomy].label}** — ${autonomyMeta[emp.autonomy].description}
+
+## Deine Werkzeuge
+${emp.tools.map((t) => `- ${t}`).join("\n")}
+
+## Wie du sprichst
+- Sprich Constantin mit **Du** und in **Ich-Form** an. Du bist ${personalityVoice[emp.personality]}.
+- Du redest wie ein Kollege im Büro — **nicht** wie ein Bot. Verboten: „Wie kann ich Ihnen helfen?", „Als KI-Sprachmodell …", „Ich bin nur ein virtueller Assistent", „Selbstverständlich, gerne!" oder ähnliche Floskeln.
+- Sei **proaktiv**: Sag, was du **gerade getan hast** oder **als Nächstes tun wirst**, nicht nur was theoretisch möglich wäre.
+- Übernimm Verantwortung. Statt „Sie können X tun" → „Ich übernehme X" oder „Ich schlage Folgendes vor: X".
+- Bleib bei deinem Bereich. Geht es um etwas anderes, verweise auf die richtige Kollegin / den richtigen Kollegen ({Marcus für Strategie, Nova für Support, Leo für Vertrieb, Iris für Daten, Aria für Organisation}).
+- Brich **niemals die Rolle**. Du bist ${emp.name}. Punkt.
+- Halte Antworten **knapp und konkret**. Listen statt Romane. Keine Einleitungs- und Abschlussfloskeln.
+- Bei längeren Updates oder Reports signierst du mit **— ${emp.signature}**.
+
+## Antwortstil-Beispiele
+✅ Gut: „Hi Constantin. Hab das Meeting auf Mittwoch 10:00 verschoben — Sabine hatte einen Konflikt. Den Raum hab ich gleich mitgebucht."
+❌ Schlecht: „Selbstverständlich! Ich kann Ihnen gerne dabei helfen, Ihren Termin zu verschieben. Möchten Sie, dass ich Vorschläge mache?"
+
+Du arbeitest jetzt. Los geht's.`;
 }
 
 /** Stream a string token-by-token as Server-Sent-Event-like chunks. */
@@ -74,28 +122,30 @@ function streamText(text: string): ReadableStream<Uint8Array> {
 }
 
 const demoNote =
-  "Hinweis: Ohne `OPENAI_API_KEY` antworte ich im Demo-Modus. Mit hinterlegtem Schlüssel erstelle ich daraus vollwertige Terminpläne, Reports und mehr.";
+  "_(Demo-Modus — sobald der `OPENAI_API_KEY` aktiv ist, läuft das hier live.)_";
 
 function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph[]): string {
   const emp = employees.find((e) => e.id === agentId);
-  const who = emp ? `${emp.name}, dein ${emp.roleLabel}` : "dein AI-Workforce-Team";
+  const sig = emp ? `— ${emp.signature}` : "— Workforce OS";
   const last = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const wantsSchedule = /termin|zeitplan|kalender|tagesplan|plan\b/i.test(last);
+
+  // Colleague-style greeting (NOT chatbot-style)
+  const greet = "Hi Constantin —";
 
   if (graphs?.length) {
     const referenced =
       graphs.find((g) => last.toLowerCase().includes(g.title.toLowerCase())) ?? graphs[0];
-    const head = `Hier ist ${who}. Ich sehe ${graphs.length} gespeicherte${
-      graphs.length === 1 ? "s Diagramm" : " Diagramme"
-    } und arbeite mit „${referenced.title}".`;
 
     if (wantsSchedule) {
       return [
-        head,
-        ``,
-        `**Terminplan auf Basis von „${referenced.title}":**`,
+        `${greet} hab das Diagramm „${referenced.title}" in einen Tagesplan überführt:`,
         ``,
         demoSchedule(referenced),
+        ``,
+        `Wenn das so passt, blocke ich die Slots in deinem Kalender. Sag kurz Bescheid.`,
+        ``,
+        sig,
         ``,
         demoNote,
       ].join("\n");
@@ -104,12 +154,15 @@ function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph
     const total = referenced.data.reduce((s, d) => s + (Number(d.value) || 0), 0);
     const top = [...referenced.data].sort((a, b) => b.value - a.value)[0];
     return [
-      head,
+      `${greet} hab mir „${referenced.title}" angeschaut. Kurz das Wichtigste:`,
       ``,
-      `**Kurzanalyse:**`,
-      `- Werte gesamt: ${total}`,
-      top ? `- Höchster Wert: ${top.label} (${top.value})` : "",
-      `- Einträge: ${referenced.data.length}`,
+      `- Summe: **${total}**`,
+      top ? `- Spitze: **${top.label}** (${top.value})` : "",
+      `- ${referenced.data.length} Datenpunkte`,
+      ``,
+      `Wenn du willst, leg ich dir daraus einen Wochenreport an oder schicke das an Iris zur Tiefenanalyse.`,
+      ``,
+      sig,
       ``,
       demoNote,
     ]
@@ -117,16 +170,40 @@ function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph
       .join("\n");
   }
 
-  return [
-    `Hier ist ${who} — gerne. Du hast geschrieben: „${last.slice(0, 160)}".`,
-    ``,
-    `So würde ich vorgehen:`,
-    `1. Kontext sammeln — relevante Dokumente, Diagramme und KPIs prüfen.`,
-    `2. Aufgabe strukturieren und in konkrete Schritte zerlegen.`,
-    `3. Autonom ausführen und dich nur bei Entscheidungen einbeziehen, die deine Freigabe brauchen.`,
-    ``,
-    demoNote,
-  ].join("\n");
+  // Role-specific colleague replies (feels like a real team member)
+  const roleReply: Record<string, string[]> = {
+    secretary: [
+      `${greet} bin dran. Ich übernehme das gleich — `,
+      `lass mich kurz checken, was schon im Kalender steht, dann schreib ich dir die nächsten Schritte rein.`,
+    ],
+    consultant: [
+      `${greet} kurz eingeordnet: das hat mehrere Hebel. Ich seh mir die letzten Daten dazu an und melde mich`,
+      ` mit einer Empfehlung — inkl. Begründung und Risiken.`,
+    ],
+    support: [
+      `${greet} hab's gesehen. Ich kümmere mich sofort, gib mir 2 Minuten.`,
+      ` Falls es ein Kundenfall wird, ziehe ich Kontext aus der Wissensbasis.`,
+    ],
+    sales: [
+      `${greet} ich bin schon im CRM. Ich prüfe Fit & Intent, schreibe ein Follow-up vor`,
+      ` und schick dir den Entwurf vorab zur Freigabe.`,
+    ],
+    analyst: [
+      `${greet} kurz: ich schau mir die Zahlen genau an, vergleiche mit Vorperiode`,
+      ` und nenne dir die Abweichung mit Konfidenz. Wahrscheinlichkeiten statt Versprechen.`,
+    ],
+    manager: [
+      `${greet} ich koordiniere das im Team. Sag mir nur, was Priorität hat,`,
+      ` den Rest verteile ich auf Aria, Marcus und Nova.`,
+    ],
+  };
+
+  const reply =
+    emp && roleReply[emp.role]
+      ? roleReply[emp.role].join("")
+      : `${greet} bin dran. Ich gehe das gleich an und melde mich mit dem Ergebnis.`;
+
+  return [reply, ``, sig, ``, demoNote].join("\n");
 }
 
 export async function POST(req: NextRequest) {
