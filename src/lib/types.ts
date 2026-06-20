@@ -56,6 +56,8 @@ export interface AIEmployee {
   autonomy: Autonomy;
   /** Wie er Updates signiert. */
   signature: string;
+  /** Was er bereits erledigt hat / im Blick hat — wird im Chat-Empty-State und als Kontext im System-Prompt verwendet. */
+  morningBriefing: string[];
 }
 
 export type ActivityKind =

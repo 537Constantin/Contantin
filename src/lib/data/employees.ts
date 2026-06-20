@@ -125,6 +125,11 @@ export const employees: AIEmployee[] = [
     ],
     autonomy: "approve",
     signature: "Aria",
+    morningBriefing: [
+      "Postfach durchgesehen — 14 Mails sortiert, 11 davon bereits beantwortet",
+      "Termin um 14:00 auf morgen 10:30 verschoben (Sabine hatte einen Konflikt)",
+      "Drei Anrufe entgegengenommen, einer braucht deinen Rückruf — Notizen liegen bereit",
+    ],
   },
   {
     id: "emp-marcus",
@@ -167,6 +172,11 @@ export const employees: AIEmployee[] = [
     ],
     autonomy: "suggest",
     signature: "Marcus",
+    morningBriefing: [
+      "Wochenend-KPIs durchgespielt — eine Auffälligkeit, die du sehen solltest",
+      "Wettbewerber-Update gelesen: zwei relevante Bewegungen im Markt",
+      "Entscheidungsvorlage zum Onboarding-Funnel liegt bereit, drei Varianten",
+    ],
   },
   {
     id: "emp-nova",
@@ -209,6 +219,11 @@ export const employees: AIEmployee[] = [
     ],
     autonomy: "autonomous",
     signature: "Nova",
+    morningBriefing: [
+      "Über Nacht 23 Tickets gelöst, ein durchschnittlicher Sentiment-Wert von +0.7",
+      "Eine Beschwerde eskaliert — Zusammenfassung und Vorschlag liegen vor",
+      "Wissensbasis um zwei Artikel ergänzt (Rückgaben, Zahlungsmethoden)",
+    ],
   },
   {
     id: "emp-leo",
@@ -251,6 +266,11 @@ export const employees: AIEmployee[] = [
     ],
     autonomy: "approve",
     signature: "Leo",
+    morningBriefing: [
+      "Vier neue Leads bewertet — zwei mit Score ≥ 80, einer riecht nach Abschluss",
+      "Follow-ups für heute bereits entworfen, warten auf deinen Blick",
+      "Angebot Nordwind aktualisiert und versandbereit (Rabatt unter Schwelle)",
+    ],
   },
   {
     id: "emp-iris",
@@ -293,6 +313,11 @@ export const employees: AIEmployee[] = [
     ],
     autonomy: "suggest",
     signature: "Iris",
+    morningBriefing: [
+      "Anomalie erkannt: Mobile-Conversion −18 % vs. Vorwoche",
+      "Wochenreport für heute 07:00 fertig vorbereitet",
+      "Datenqualitätsprüfung: drei fehlende Werte im CRM markiert",
+    ],
   },
 ];
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowUp, Sparkles, ChevronDown, Square, Paperclip, Mic } from "lucide-react";
+import { ArrowUp, ChevronDown, Square, Paperclip, Mic } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/app/status";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
 
 const suggestions = [
-  "Bereite mir das Briefing für morgen früh vor",
-  "Übernimm die Follow-ups, die heute fällig sind",
-  "Sieh dir die offenen Tickets an und sag mir, wo's brennt",
-  "Such die größten Lecks in unserer Pipeline",
+  "Brief mich auf morgen",
+  "Was muss ich heute persönlich entscheiden?",
+  "Übernimm die heutigen Follow-ups",
+  "Zeig mir, wo's brennt",
 ];
 
 export default function ChatPage() {
@@ -168,17 +168,33 @@ function ChatView() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="mx-auto w-full max-w-3xl">
           {empty ? (
-            <div className="flex flex-col items-center justify-center pt-10 text-center">
-              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] shadow-[var(--shadow-glow)]">
-                <Sparkles className="h-8 w-8 text-canvas" />
-              </span>
+            <div className="flex flex-col items-center pt-6 text-center">
+              <Avatar name={agent.name} color={agent.avatarColor} size="xl" glow />
               <h2 className="mt-5 font-display text-2xl font-semibold text-ink">
-                Was soll {agent.name} übernehmen?
+                Constantin.
               </h2>
-              <p className="mt-2 max-w-md text-sm text-muted">
-                Delegiere wie an einen Kollegen. {agent.name} kennt seinen Auftrag, hat Zugriff auf Tools und Gedächtnis – und meldet sich mit Ergebnissen, nicht mit Rückfragen.
+              <p className="mt-1 text-sm text-muted">
+                {agent.name} ist bereit — {agent.roleLabel}.
               </p>
-              <div className="mt-6 grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
+
+              <div className="mt-7 w-full max-w-xl rounded-2xl border border-border bg-surface/60 p-5 text-left">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Stand jetzt
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-ink">
+                  {agent.morningBriefing.map((line, i) => (
+                    <li key={i} className="flex gap-2.5">
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="mt-7 text-xs font-medium uppercase tracking-wide text-muted">
+                Was soll als Nächstes laufen?
+              </p>
+              <div className="mt-3 grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
                 {suggestions.map((s) => (
                   <button
                     key={s}
