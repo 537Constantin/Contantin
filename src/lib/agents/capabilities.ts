@@ -10,6 +10,14 @@ import type { Capability, CapabilityCategory } from "@/lib/types";
  * integration once the user provides credentials. Until then the activation
  * flow, gating and configuration are all real.
  */
+
+/** Any connected mailbox (OAuth or IMAP) satisfies inbox-reading needs. */
+const INBOX_ANY: string[] = ["gmail", "outlook", "imap_smtp"];
+/** Any connected calendar satisfies calendar needs. */
+const CAL_ANY: string[] = ["google_calendar", "outlook_calendar"];
+/** Any sending channel — own mailbox or transactional service. */
+const SEND_ANY: string[] = ["resend", "gmail", "outlook", "imap_smtp"];
+
 export const capabilities: Capability[] = [
   // ============== KOMMUNIKATION & SEKRETARIAT (Aria) ====================
   {
@@ -19,7 +27,7 @@ export const capabilities: Capability[] = [
       "Sortiert neue E-Mails nach Wichtigkeit, weist Labels zu und markiert, was deinen Blick braucht.",
     category: "communication",
     ownerRole: "secretary",
-    requiredIntegrations: ["gmail", "openai"],
+    requiredIntegrations: [INBOX_ANY, "openai"],
     permissions: ["read_email"],
     trigger: "event",
     output: "Inbox mit Labels, ein Stapel mit deinen Top-Prioritäten.",
@@ -57,7 +65,7 @@ export const capabilities: Capability[] = [
       "Liest alle neuen E-Mails seit dem letzten Briefing und schickt dir eine Zusammenfassung per Mail.",
     category: "communication",
     ownerRole: "secretary",
-    requiredIntegrations: ["gmail", "resend", "openai"],
+    requiredIntegrations: [INBOX_ANY, SEND_ANY, "openai"],
     permissions: ["read_email", "send_email"],
     trigger: "schedule",
     schedule: "Werktags 07:00",
@@ -102,7 +110,7 @@ export const capabilities: Capability[] = [
       "Schreibt für Routine-Mails Antwort-Entwürfe in deinem Ton und legt sie als Entwurf in dein Postfach.",
     category: "communication",
     ownerRole: "secretary",
-    requiredIntegrations: ["gmail", "openai"],
+    requiredIntegrations: [INBOX_ANY, "openai"],
     permissions: ["read_email", "send_email"],
     trigger: "event",
     output: "Entwürfe im Postfach — du musst nur noch lesen & senden.",
@@ -140,7 +148,7 @@ export const capabilities: Capability[] = [
       "Findet Slots, bucht Termine, löst Konflikte automatisch und benachrichtigt alle Beteiligten.",
     category: "calendar",
     ownerRole: "secretary",
-    requiredIntegrations: ["google_calendar", "gmail", "openai"],
+    requiredIntegrations: [CAL_ANY, INBOX_ANY, "openai"],
     permissions: ["read_calendar", "write_calendar", "send_email"],
     trigger: "event",
     output: "Termine im Kalender, Einladungen verschickt, Konflikte gelöst.",
@@ -177,7 +185,7 @@ export const capabilities: Capability[] = [
     description: "Schickt rechtzeitig Erinnerungen für anstehende Termine.",
     category: "calendar",
     ownerRole: "secretary",
-    requiredIntegrations: ["google_calendar", "resend"],
+    requiredIntegrations: [CAL_ANY, SEND_ANY],
     permissions: ["read_calendar", "send_email"],
     trigger: "schedule",
     schedule: "Täglich 17:00 für nächsten Tag",
@@ -244,7 +252,7 @@ export const capabilities: Capability[] = [
       "Hört Meetings mit, erstellt Protokoll mit Entscheidungen und Action Items, verteilt es per Mail.",
     category: "communication",
     ownerRole: "secretary",
-    requiredIntegrations: ["deepgram", "openai", "resend"],
+    requiredIntegrations: ["deepgram", "openai", SEND_ANY],
     permissions: ["send_email"],
     trigger: "manual",
     output: "Strukturiertes Protokoll mit Entscheidungen und Aufgaben.",
@@ -309,7 +317,7 @@ export const capabilities: Capability[] = [
       "Schreibt und versendet personalisierte Follow-ups auf Basis des CRM-Kontexts.",
     category: "sales",
     ownerRole: "sales",
-    requiredIntegrations: ["hubspot", "gmail", "openai"],
+    requiredIntegrations: ["hubspot", SEND_ANY, "openai"],
     permissions: ["read_crm", "write_crm", "send_email"],
     trigger: "schedule",
     schedule: "Tag 3, 7, 14 nach letztem Kontakt",
@@ -374,7 +382,7 @@ export const capabilities: Capability[] = [
       "Analysiert die Pipeline und liefert dir freitags einen Bericht mit Trends und Risiken.",
     category: "sales",
     ownerRole: "sales",
-    requiredIntegrations: ["hubspot", "openai", "resend"],
+    requiredIntegrations: ["hubspot", "openai", SEND_ANY],
     permissions: ["read_crm", "send_email"],
     trigger: "schedule",
     schedule: "Freitag 16:00",
@@ -538,7 +546,7 @@ export const capabilities: Capability[] = [
     description: "Schickt fertige Rechnungen direkt an die Kunden.",
     category: "accounting",
     ownerRole: "accountant",
-    requiredIntegrations: ["lexoffice", "resend"],
+    requiredIntegrations: ["lexoffice", SEND_ANY],
     permissions: ["read_accounting", "send_email"],
     trigger: "event",
     output: "Versendete Rechnung mit Tracking.",
@@ -591,7 +599,7 @@ export const capabilities: Capability[] = [
       "Erstellt Mahnstufen 1–3 auf Basis der Fälligkeiten — du musst nur freigeben.",
     category: "accounting",
     ownerRole: "accountant",
-    requiredIntegrations: ["lexoffice", "resend"],
+    requiredIntegrations: ["lexoffice", SEND_ANY],
     permissions: ["read_accounting", "write_accounting", "send_email"],
     trigger: "schedule",
     schedule: "Werktags 11:00",
@@ -630,7 +638,7 @@ export const capabilities: Capability[] = [
       "Liefert dir am Monatsanfang den Vormonat: Umsatz, Marge, offene Posten, Trends.",
     category: "accounting",
     ownerRole: "accountant",
-    requiredIntegrations: ["lexoffice", "banking_finapi", "openai", "resend"],
+    requiredIntegrations: ["lexoffice", "banking_finapi", "openai", SEND_ANY],
     permissions: ["read_accounting", "read_banking", "send_email"],
     trigger: "schedule",
     schedule: "1. Werktag im Monat 07:00",
@@ -686,7 +694,7 @@ export const capabilities: Capability[] = [
       "Findet Slots, koordiniert mit den Beteiligten, schickt Einladungen automatisch.",
     category: "hr",
     ownerRole: "hr",
-    requiredIntegrations: ["google_calendar", "gmail"],
+    requiredIntegrations: [CAL_ANY, INBOX_ANY],
     permissions: ["read_calendar", "write_calendar", "send_email"],
     trigger: "manual",
     output: "Termin gebucht, Einladung verschickt.",
@@ -712,7 +720,7 @@ export const capabilities: Capability[] = [
       "Legt Onboarding-Aufgaben an und schickt dem neuen Mitarbeiter eine Willkommens-Mail.",
     category: "hr",
     ownerRole: "hr",
-    requiredIntegrations: ["gmail", "google_calendar"],
+    requiredIntegrations: [SEND_ANY, CAL_ANY],
     permissions: ["send_email", "write_calendar"],
     trigger: "manual",
     output: "Onboarding-Plan + erste Termine eingerichtet.",
@@ -738,7 +746,7 @@ export const capabilities: Capability[] = [
     description: "Sammelt Anträge, prüft Überschneidungen, schlägt Freigaben vor.",
     category: "hr",
     ownerRole: "hr",
-    requiredIntegrations: ["gmail", "google_calendar"],
+    requiredIntegrations: [INBOX_ANY, CAL_ANY],
     permissions: ["read_email", "read_calendar", "write_calendar"],
     trigger: "event",
     output: "Übersicht offener Anträge und Konflikte.",
@@ -891,7 +899,7 @@ export const capabilities: Capability[] = [
       "Konsolidiert KPIs, offene Themen und Risiken zu einem 1-Minute-Briefing.",
     category: "strategy",
     ownerRole: "consultant",
-    requiredIntegrations: ["openai", "resend"],
+    requiredIntegrations: ["openai", SEND_ANY],
     permissions: ["send_email"],
     trigger: "schedule",
     schedule: "Werktags 07:30",
@@ -913,7 +921,7 @@ export const capabilities: Capability[] = [
       "Bewertet die wichtigsten Kennzahlen, erklärt Veränderungen, zeigt Risiken.",
     category: "strategy",
     ownerRole: "analyst",
-    requiredIntegrations: ["openai", "resend"],
+    requiredIntegrations: ["openai", SEND_ANY],
     permissions: ["send_email"],
     trigger: "schedule",
     schedule: "Montag 07:00",

@@ -1,6 +1,10 @@
 "use client";
 
-import type { AgentRuntimeState, CapabilityState } from "@/lib/types";
+import type {
+  AgentRuntimeState,
+  CapabilityState,
+  IntegrationRequirement,
+} from "@/lib/types";
 
 /**
  * Client-side persistence for which integrations are connected and which
@@ -79,9 +83,17 @@ export function setCapabilityState(
   };
 }
 
+/**
+ * Returns the list of unsatisfied requirements. Each entry is either a single
+ * integration ID (must be connected) or an array of alternatives (ANY must be
+ * connected). The caller decides how to present the missing pieces.
+ */
 export function missingIntegrationsFor(
   state: AgentRuntimeState,
-  required: string[],
-): string[] {
-  return required.filter((id) => !isIntegrationConnected(state, id));
+  required: IntegrationRequirement[],
+): IntegrationRequirement[] {
+  return required.filter((req) => {
+    if (typeof req === "string") return !isIntegrationConnected(state, req);
+    return !req.some((id) => isIntegrationConnected(state, id));
+  });
 }

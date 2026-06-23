@@ -252,6 +252,13 @@ export interface SetupStep {
   inputs?: SetupInput[];
 }
 
+/**
+ * A capability can require either a specific integration (single string) or
+ * "one of several" alternatives (array). Example: an email-triage job needs
+ * a connected mailbox — that can be Gmail OR Outlook OR IMAP (=> array).
+ */
+export type IntegrationRequirement = string | string[];
+
 export interface Capability {
   id: string;
   name: string;
@@ -259,8 +266,8 @@ export interface Capability {
   category: CapabilityCategory;
   /** Default owner role — capabilities can be reassigned by the user. */
   ownerRole: EmployeeRole;
-  /** Integration IDs that must be connected before this can be activated. */
-  requiredIntegrations: string[];
+  /** Integration requirements. Each entry must be satisfied — single string = exact match, array = ANY of these counts. */
+  requiredIntegrations: IntegrationRequirement[];
   /** Permissions the agent will request when the user enables this. */
   permissions: Permission[];
   trigger: TriggerKind;

@@ -6,7 +6,12 @@ import { X, Check, ArrowRight, Plug, Power } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Capability, CapabilityState, SetupInput } from "@/lib/types";
+import type {
+  Capability,
+  CapabilityState,
+  IntegrationRequirement,
+  SetupInput,
+} from "@/lib/types";
 import { getIntegration } from "@/lib/agents/integrations";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +19,7 @@ interface Props {
   open: boolean;
   capability: Capability | null;
   initialConfig?: Record<string, string>;
-  missingIntegrations: string[];
+  missingIntegrations: IntegrationRequirement[];
   onClose: () => void;
   onSave: (state: CapabilityState) => void;
 }
@@ -127,25 +132,56 @@ export function SetupDialog({
                     Diese Aufgabe braucht Verbindungen, die noch fehlen:
                   </p>
                   <ul className="space-y-2">
-                    {missingIntegrations.map((id) => {
-                      const int = getIntegration(id);
-                      if (!int) return null;
+                    {missingIntegrations.map((req, i) => {
+                      if (typeof req === "string") {
+                        const int = getIntegration(req);
+                        if (!int) return null;
+                        return (
+                          <li
+                            key={req}
+                            className="flex items-center gap-3 rounded-xl border border-border bg-surface-soft/40 p-3"
+                          >
+                            <span
+                              className="grid h-9 w-9 place-items-center rounded-lg font-bold text-white"
+                              style={{ background: int.color }}
+                            >
+                              {int.badge}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-ink">{int.name}</p>
+                              <p className="text-xs text-muted">{int.unlocks}</p>
+                            </div>
+                            <Badge variant="warning">Nicht verbunden</Badge>
+                          </li>
+                        );
+                      }
+                      // Alternatives — user picks ONE.
                       return (
                         <li
-                          key={id}
-                          className="flex items-center gap-3 rounded-xl border border-border bg-surface-soft/40 p-3"
+                          key={i}
+                          className="rounded-xl border border-border bg-surface-soft/40 p-3"
                         >
-                          <span
-                            className="grid h-9 w-9 place-items-center rounded-lg font-bold text-white"
-                            style={{ background: int.color }}
-                          >
-                            {int.badge}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-ink">{int.name}</p>
-                            <p className="text-xs text-muted">{int.unlocks}</p>
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-warning">
+                            Mindestens eines verbinden:
+                          </p>
+                          <div className="space-y-1.5">
+                            {req.map((id) => {
+                              const int = getIntegration(id);
+                              if (!int) return null;
+                              return (
+                                <div key={id} className="flex items-center gap-3">
+                                  <span
+                                    className="grid h-7 w-7 place-items-center rounded-md text-xs font-bold text-white"
+                                    style={{ background: int.color }}
+                                  >
+                                    {int.badge}
+                                  </span>
+                                  <span className="flex-1 text-sm text-ink">{int.name}</span>
+                                  <span className="text-[11px] text-muted">{int.provider}</span>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <Badge variant="warning">Nicht verbunden</Badge>
                         </li>
                       );
                     })}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Clock, Zap, Hand, Webhook, Plug, Power, Cog, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Capability, TriggerKind } from "@/lib/types";
+import type { Capability, IntegrationRequirement, TriggerKind } from "@/lib/types";
 import { triggerLabel } from "@/lib/agents/capabilities";
 import { getIntegration } from "@/lib/agents/integrations";
 import { cn } from "@/lib/utils";
@@ -20,16 +20,28 @@ const triggerIcon: Record<TriggerKind, typeof Clock> = {
 interface Props {
   capability: Capability;
   enabled: boolean;
-  missingIntegrations: string[];
+  missingIntegrations: IntegrationRequirement[];
+  /** IDs the user currently has connected — used to label alternatives. */
+  connectedIntegrationIds: string[];
   onActivate: () => void;
   onDeactivate: () => void;
   onConfigure: () => void;
+}
+
+function reqKey(req: IntegrationRequirement) {
+  return typeof req === "string" ? req : req.join("|");
+}
+
+function reqIsMissing(missing: IntegrationRequirement[], req: IntegrationRequirement) {
+  const k = reqKey(req);
+  return missing.some((m) => reqKey(m) === k);
 }
 
 export function CapabilityCard({
   capability: cap,
   enabled,
   missingIntegrations,
+  connectedIntegrationIds,
   onActivate,
   onDeactivate,
   onConfigure,
@@ -69,18 +81,45 @@ export function CapabilityCard({
           <TIcon className="h-3 w-3" /> {triggerLabel[cap.trigger]}
           {cap.schedule && <span className="ml-1 text-muted">· {cap.schedule}</span>}
         </Badge>
-        {cap.requiredIntegrations.map((id) => {
-          const int = getIntegration(id);
-          if (!int) return null;
-          const missing = missingIntegrations.includes(id);
+        {cap.requiredIntegrations.map((req) => {
+          const missing = reqIsMissing(missingIntegrations, req);
+          if (typeof req === "string") {
+            const int = getIntegration(req);
+            if (!int) return null;
+            return (
+              <Badge key={req} variant={missing ? "warning" : "success"}>
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: int.color }}
+                  aria-hidden
+                />
+                {int.name}
+              </Badge>
+            );
+          }
+          // "Any of" requirement: show which is connected, or list alternatives.
+          const connected = req.find((id) => connectedIntegrationIds.includes(id));
+          if (connected) {
+            const int = getIntegration(connected);
+            if (!int) return null;
+            return (
+              <Badge key={reqKey(req)} variant="success">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: int.color }}
+                  aria-hidden
+                />
+                {int.name}
+              </Badge>
+            );
+          }
+          const names = req
+            .map((id) => getIntegration(id)?.name)
+            .filter(Boolean)
+            .join(" / ");
           return (
-            <Badge key={id} variant={missing ? "warning" : "success"}>
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ background: int.color }}
-                aria-hidden
-              />
-              {int.name}
+            <Badge key={reqKey(req)} variant="warning">
+              {names}
             </Badge>
           );
         })}

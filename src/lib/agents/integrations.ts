@@ -32,6 +32,20 @@ export const integrations: Integration[] = [
     unlocks: "E-Mail-Triage, Zusammenfassungen, Antworten, Adressbuch.",
   },
   {
+    id: "imap_smtp",
+    name: "IMAP / SMTP (jedes Postfach)",
+    provider: "Universell",
+    category: "communication",
+    description:
+      "Universelle E-Mail-Verbindung für GMX, Web.de, T-Online, 1&1, Strato, eigene Domains, iCloud, mailbox.org und alle anderen Anbieter.",
+    badge: "@",
+    color: "#52525b",
+    auth: "api_key",
+    envVar: "IMAP_PASSWORD",
+    unlocks:
+      "E-Mail-Triage, Zusammenfassungen, Antworten und Versand mit beliebigem Anbieter — nicht nur Google/Microsoft.",
+  },
+  {
     id: "resend",
     name: "Resend",
     provider: "Resend",

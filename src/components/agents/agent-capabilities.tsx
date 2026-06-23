@@ -142,6 +142,7 @@ export function AgentCapabilities({ employee }: { employee: AIEmployee }) {
                         capability={c}
                         enabled={isCapabilityEnabled(state, c.id)}
                         missingIntegrations={missingIntegrationsFor(state, c.requiredIntegrations)}
+                        connectedIntegrationIds={state.connectedIntegrations}
                         onActivate={() => setDialog(c)}
                         onConfigure={() => setDialog(c)}
                         onDeactivate={() =>
