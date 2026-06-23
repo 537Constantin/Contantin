@@ -241,6 +241,46 @@ function mockReply(messages: IncomingMessage[], agentId?: string, graphs?: Graph
       ``,
       `Was hat heute Priorität — Strategie, Vertrieb oder Operatives?`,
     ].join("\n"),
+
+    accountant: [
+      `Constantin. Bücher sind sauber.`,
+      ``,
+      `- 6 Zahlungseingänge automatisch abgeglichen.`,
+      `- Zwei Mahnstufen 1 stehen bereit — du musst nur freigeben.`,
+      `- Monatsbericht zu 60 % fertig, Endspurt bis Freitag.`,
+      ``,
+      `Soll ich die Mahnungen heute rausschicken?`,
+    ].join("\n"),
+
+    hr: [
+      `Constantin. Personalseitig läuft.`,
+      ``,
+      `- 5 neue Bewerbungen vorsortiert — 2 davon scharf anschauen.`,
+      `- Interview mit Lara morgen 11:00 im Kalender.`,
+      `- Onboarding-Plan für Mark startet Montag, alles steht.`,
+      ``,
+      `Welche der Bewerbungen soll ich für ein Erstgespräch einladen?`,
+    ].join("\n"),
+
+    marketing: [
+      `Constantin. Marke ist sichtbar.`,
+      ``,
+      `- Zwei LinkedIn-Posts für die Woche entworfen.`,
+      `- Newsletter-Skelett für Donnerstag steht.`,
+      `- Wettbewerber: zwei Preisänderungen, eine relevante Produkt-Ankündigung.`,
+      ``,
+      `Welchen Post soll ich heute scharf stellen?`,
+    ].join("\n"),
+
+    operations: [
+      `Constantin. Operations sind im grünen Bereich.`,
+      ``,
+      `- Drei Fristen diese Woche im Blick — keine kritisch.`,
+      `- Zwei Verträge zur Kündigung geprüft, Empfehlung steht.`,
+      `- Prozess „Onboarding Kunde" aktualisiert.`,
+      ``,
+      `Welche Frist soll ich dir morgen früh nochmal melden?`,
+    ].join("\n"),
   };
 
   const reply =

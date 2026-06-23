@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatusDot } from "@/components/app/status";
 import { ActivityFeed } from "@/components/app/activity-feed";
+import { AgentCapabilities } from "@/components/agents/agent-capabilities";
 import { getEmployee, employees, personalityMeta, autonomyMeta } from "@/lib/data/employees";
 import { activity } from "@/lib/data/activity";
 import { formatNumber } from "@/lib/utils";
@@ -169,6 +170,8 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
               </p>
             </CardContent>
           </Card>
+
+          <AgentCapabilities employee={emp} />
 
           <Card>
             <CardHeader>

@@ -9,6 +9,7 @@ import {
   LineChart,
   UsersRound,
   Settings,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +52,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "Verwaltung",
     items: [
+      { label: "Integrationen", href: "/integrations", icon: Plug },
       { label: "Team", href: "/team", icon: UsersRound },
       { label: "Einstellungen", href: "/settings", icon: Settings },
     ],
