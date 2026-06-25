@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AI Workforce OS</title>
+    <style>
+      :root { color-scheme: light dark; }
+      html, body {
+        margin: 0; padding: 0; height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+        background: #ffffff; color: #09090b;
+      }
+      @media (prefers-color-scheme: dark) {
+        html, body { background: #0a0a0a; color: #fafafa; }
+      }
+      .wrap {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        height: 100%; padding: 24px; text-align: center;
+      }
+      .logo {
+        display: grid; place-items: center;
+        width: 64px; height: 64px; border-radius: 16px;
+        background: #09090b; color: #fff;
+        font-weight: 700; font-size: 28px;
+      }
+      h1 { font-size: 20px; margin: 20px 0 4px; font-weight: 600; letter-spacing: -0.01em; }
+      p { font-size: 14px; opacity: 0.7; margin: 0 0 18px; max-width: 280px; line-height: 1.4; }
+      a {
+        display: inline-block; padding: 12px 20px;
+        background: #09090b; color: #fff; text-decoration: none;
+        border-radius: 999px; font-weight: 500; font-size: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .logo { background: #fafafa; color: #09090b; }
+        a { background: #fafafa; color: #09090b; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="logo">✦</div>
+      <h1>AI Workforce OS</h1>
+      <p>Keine Internetverbindung. Sobald du wieder online bist, läuft alles weiter.</p>
+      <a id="retry" href="#" onclick="location.reload(); return false;">Erneut versuchen</a>
+    </div>
+  </body>
+</html>
