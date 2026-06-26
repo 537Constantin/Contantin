@@ -33,7 +33,7 @@ export default function DashboardPage() {
     <PageShell>
       <PageHeader
         title="Guten Morgen, Constantin"
-        description="Deine KI-Belegschaft hat heute Nacht 7 Anrufe entgegengenommen, 31 Tickets gelöst und 4 Reports erstellt."
+        description="Deine KI-Belegschaft hat heute Nacht 41 Mails triagiert, 31 Tickets gelöst und 4 Reports erstellt."
       >
         <Button variant="outline" size="sm" asChild>
           <Link href="/analytics">Report ansehen</Link>
@@ -70,7 +70,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Aktivität</CardTitle>
-            <Link href="/calls" className="text-xs font-medium text-accent hover:underline">
+            <Link href="/analytics" className="text-xs font-medium text-accent hover:underline">
               Alle
             </Link>
           </CardHeader>

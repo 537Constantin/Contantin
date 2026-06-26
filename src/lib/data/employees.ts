@@ -5,11 +5,11 @@ export const roleMeta: Record<
   { label: string; blurb: string; color: string; defaultSkills: string[]; defaultTools: string[] }
 > = {
   secretary: {
-    label: "KI-Sekretär",
-    blurb: "Telefon, Termine, Postfach & Tagesorganisation",
+    label: "Executive Assistant",
+    blurb: "Postfach, Termine, Meetings & Tagesorganisation",
     color: "#7c6dff",
-    defaultSkills: ["Terminplanung", "Anrufannahme", "E-Mail-Triage", "Erinnerungen"],
-    defaultTools: ["Kalender", "Telefonie", "E-Mail", "Aufgaben"],
+    defaultSkills: ["E-Mail-Triage", "Terminplanung", "Meeting-Vorbereitung", "Erinnerungen"],
+    defaultTools: ["Kalender", "E-Mail", "Dokumente", "Aufgaben"],
   },
   consultant: {
     label: "KI-Unternehmensberater",
@@ -121,9 +121,9 @@ export const employees: AIEmployee[] = [
     status: "active",
     personality: "friendly",
     description:
-      "Aria nimmt Anrufe entgegen, koordiniert Termine über alle Kalender und hält dein Postfach auf Null. Sie spricht natürlich und eskaliert nur, wenn es nötig ist.",
-    skills: ["Anrufannahme", "Terminplanung", "E-Mail-Triage", "Live-Transkription", "Erinnerungen"],
-    tools: ["Kalender", "Telefonie", "E-Mail", "Aufgaben"],
+      "Aria hält den Tag organisiert: Postfach auf Null, Kalender konfliktfrei, Meetings vorbereitet, Reisen geplant. Sie eskaliert nur, wenn deine Entscheidung wirklich gebraucht wird.",
+    skills: ["E-Mail-Triage", "Terminplanung", "Meeting-Vorbereitung", "Reise-Logistik", "Erinnerungen"],
+    tools: ["Kalender", "E-Mail", "Dokumente", "Aufgaben"],
     model: "gpt-4o",
     performance: 96,
     tasksCompleted: 1284,
@@ -134,9 +134,9 @@ export const employees: AIEmployee[] = [
     objective:
       "Halte Constantins Tag organisiert und sein Postfach auf Null. Routine übernimmst du. Wichtige Entscheidungen bereitest du sauber vor und reichst sie weiter.",
     responsibilities: [
-      "Anrufe entgegennehmen, transkribieren und protokollieren",
-      "Termine planen, verschieben und Konflikte auflösen",
       "E-Mail-Eingang triagen und Routineantworten verschicken",
+      "Termine planen, verschieben und Konflikte auflösen",
+      "Meetings vorbereiten — Agenda, Briefing, Unterlagen",
       "Tägliches Morgen-Briefing um 7:00 vorbereiten",
       "Reisen, Reservierungen und Logistik organisieren",
     ],
@@ -146,9 +146,9 @@ export const employees: AIEmployee[] = [
       "Vertrauliche Informationen nur mit Freigabe weitergeben",
     ],
     triggers: [
-      "Eingehender Anruf",
       "Neue E-Mail im Postfach",
       "Termin in den nächsten 24 Stunden",
+      "Meeting in 60 Min — Vorbereitung fällig",
       "Tagesbeginn 07:00",
     ],
     autonomy: "approve",
@@ -156,7 +156,7 @@ export const employees: AIEmployee[] = [
     morningBriefing: [
       "Postfach durchgesehen — 14 Mails sortiert, 11 davon bereits beantwortet",
       "Termin um 14:00 auf morgen 10:30 verschoben (Sabine hatte einen Konflikt)",
-      "Drei Anrufe entgegengenommen, einer braucht deinen Rückruf — Notizen liegen bereit",
+      "Briefing für das 11-Uhr-Meeting mit Nordwind liegt bereit — drei Knackpunkte markiert",
     ],
   },
   {

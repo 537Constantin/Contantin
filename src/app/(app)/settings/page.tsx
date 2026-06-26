@@ -241,7 +241,7 @@ function BillingTab() {
 
 function NotificationsTab() {
   const items = [
-    { label: "Anruf-Zusammenfassungen", desc: "E-Mail nach jedem entgegengenommenen Anruf", on: true },
+    { label: "Meeting-Briefings", desc: "Briefing 60 Min vor jedem Meeting", on: true },
     { label: "Tägliches Briefing", desc: "Morgendliche Übersicht über offene Aufgaben", on: true },
     { label: "Workflow-Fehler", desc: "Sofortige Benachrichtigung bei fehlgeschlagenen Runs", on: true },
     { label: "Wöchentlicher Report", desc: "KPI-Report jeden Montag", on: true },

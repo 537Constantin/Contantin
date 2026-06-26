@@ -4,7 +4,6 @@ import {
   MessageSquare,
   Workflow,
   FileText,
-  Phone,
   BarChart3,
   LineChart,
   UsersRound,
@@ -39,7 +38,6 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Workflows", href: "/workflows", icon: Workflow },
       { label: "Dokumente", href: "/documents", icon: FileText },
-      { label: "Telefon", href: "/calls", icon: Phone },
     ],
   },
   {

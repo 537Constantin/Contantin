@@ -85,7 +85,7 @@ export function BarChart({
       <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted">
         <Legend color="var(--color-accent)" label="Aufgaben" />
         <Legend color="var(--color-cyan)" label="Tickets" />
-        <Legend color="var(--color-success)" label="Anrufe" />
+        <Legend color="var(--color-success)" label="Meetings" />
       </div>
     </div>
   );

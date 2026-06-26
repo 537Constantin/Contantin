@@ -1,14 +1,14 @@
-import type { ActivityEvent, CallRecord, Task } from "@/lib/types";
+import type { ActivityEvent, Task } from "@/lib/types";
 
 const mins = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
 
 export const activity: ActivityEvent[] = [
   {
     id: "act-1",
-    kind: "call",
+    kind: "meeting",
     employeeId: "emp-aria",
-    title: "Anruf angenommen & Termin gebucht",
-    detail: "Frau Berger, Bestandskundin — Demo für Di 14:00 eingetragen.",
+    title: "Kalender-Konflikt aufgelöst & Termin gebucht",
+    detail: "Demo mit Sabine Berger auf Di 14:00 verschoben — Raum reserviert.",
     at: mins(4),
   },
   {
@@ -71,45 +71,3 @@ export const tasks: Task[] = [
   { id: "t-7", title: "Kalender entrümpeln & Slots blocken", employeeId: "emp-aria", priority: "low", state: "done", due: mins(120) },
 ];
 
-export const calls: CallRecord[] = [
-  {
-    id: "call-1",
-    caller: "Sabine Berger",
-    employeeId: "emp-aria",
-    durationSec: 184,
-    outcome: "scheduled",
-    sentiment: "positive",
-    summary: "Interesse an Enterprise-Plan. Demo für Dienstag 14:00 gebucht, Unterlagen per Mail zugesagt.",
-    at: mins(4),
-  },
-  {
-    id: "call-2",
-    caller: "Unbekannt (+49 30 …)",
-    employeeId: "emp-aria",
-    durationSec: 42,
-    outcome: "voicemail",
-    sentiment: "neutral",
-    summary: "Kurze Anfrage zu Öffnungszeiten — automatisch beantwortet, kein Rückruf nötig.",
-    at: mins(46),
-  },
-  {
-    id: "call-3",
-    caller: "Dr. Markus Lange",
-    employeeId: "emp-aria",
-    durationSec: 311,
-    outcome: "forwarded",
-    sentiment: "neutral",
-    summary: "Technische Detailfrage zur API. An das Engineering-Team weitergeleitet, Kontext angehängt.",
-    at: mins(130),
-  },
-  {
-    id: "call-4",
-    caller: "Nordwind GmbH",
-    employeeId: "emp-aria",
-    durationSec: 268,
-    outcome: "resolved",
-    sentiment: "positive",
-    summary: "Rückfrage zum Angebot geklärt, Zahlungsziel bestätigt. Kunde zufrieden.",
-    at: mins(280),
-  },
-];

@@ -64,7 +64,7 @@ export const plans: Plan[] = [
     features: [
       "10 KI-Mitarbeiter",
       "10.000 Aktionen / Monat",
-      "Telefon-Assistent",
+      "Buchhaltungs-Mitarbeiter inkl.",
       "Workflows & Automation",
       "Erweiterte Analytics",
     ],

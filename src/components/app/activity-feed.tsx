@@ -1,11 +1,10 @@
-import { Phone, Mail, CalendarCheck, FileText, CheckSquare, Workflow, Lightbulb, type LucideIcon } from "lucide-react";
+import { Mail, CalendarCheck, FileText, CheckSquare, Workflow, Lightbulb, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { employees } from "@/lib/data/employees";
 import type { ActivityEvent, ActivityKind } from "@/lib/types";
 
 const kindMeta: Record<ActivityKind, { icon: LucideIcon; tone: string }> = {
-  call: { icon: Phone, tone: "var(--color-success)" },
   email: { icon: Mail, tone: "var(--color-cyan)" },
   meeting: { icon: CalendarCheck, tone: "var(--color-accent)" },
   document: { icon: FileText, tone: "var(--color-violet)" },

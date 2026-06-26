@@ -65,7 +65,6 @@ export interface AIEmployee {
 }
 
 export type ActivityKind =
-  | "call"
   | "email"
   | "meeting"
   | "document"
@@ -129,17 +128,6 @@ export interface DocumentItem {
   uploadedAt: string;
 }
 
-export interface CallRecord {
-  id: string;
-  caller: string;
-  employeeId: string;
-  durationSec: number;
-  outcome: "resolved" | "scheduled" | "forwarded" | "voicemail";
-  sentiment: "positive" | "neutral" | "negative";
-  summary: string;
-  at: string;
-}
-
 export interface TeamMember {
   id: string;
   name: string;
@@ -178,8 +166,6 @@ export type IntegrationCategory =
   | "calendar"
   | "crm"
   | "accounting"
-  | "telephony"
-  | "voice"
   | "marketing"
   | "support"
   | "documents"
@@ -230,8 +216,6 @@ export type Permission =
   | "read_accounting"
   | "write_accounting"
   | "read_banking"
-  | "make_calls"
-  | "send_sms"
   | "post_social";
 
 export interface SetupInput {

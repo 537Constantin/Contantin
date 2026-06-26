@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  Sparkles, ArrowRight, Phone, Calendar, Mail, FileText, MessagesSquare,
+  Sparkles, ArrowRight, Inbox, Calendar, Mail, FileText, MessagesSquare,
   Workflow, BarChart3, Brain, ShieldCheck, Zap, Check,
 } from "lucide-react";
 import { MarketingNav } from "@/components/marketing/nav";
@@ -14,7 +14,7 @@ import { employees, roleMeta } from "@/lib/data/employees";
 import { plans, isPurchasable } from "@/lib/billing";
 
 const features = [
-  { icon: Phone, title: "Telefon-Assistent", desc: "Menschlich klingende Voice-AI nimmt Anrufe an, transkribiert live und bucht Termine." },
+  { icon: Inbox, title: "Postfach auf Null", desc: "Triagiert, beantwortet und kategorisiert eingehende E-Mails — auch GMX, Outlook und eigene Domains." },
   { icon: Calendar, title: "Termin- & Kalenderpflege", desc: "Automatische Planung, Erinnerungen und Konfliktauflösung über alle Kalender." },
   { icon: Mail, title: "E-Mail-Verarbeitung", desc: "Postfach-Triage, Entwürfe und automatische Antworten im richtigen Ton." },
   { icon: FileText, title: "Dokumenten-Intelligenz", desc: "Upload, OCR, Zusammenfassung, Kategorisierung und semantische Suche." },
@@ -62,8 +62,8 @@ export default function LandingPage() {
         </Reveal>
         <Reveal delay={0.1}>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-ink-soft text-balance">
-            AI Workforce OS gibt deinem Unternehmen autonome KI-Mitarbeiter, die Telefon, Termine,
-            E-Mails, Support, Dokumente und Beratung übernehmen. Wie ein echtes Team – nur rund um die Uhr.
+            AI Workforce OS gibt deinem Unternehmen autonome KI-Mitarbeiter, die Postfach, Termine,
+            Support, Vertrieb, Buchhaltung und Beratung übernehmen — wie ein echtes Team, rund um die Uhr.
           </p>
         </Reveal>
         <Reveal delay={0.15}>
@@ -129,7 +129,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-2xl text-center">
           <Badge variant="cyan" className="mx-auto"><Zap className="h-3.5 w-3.5" /> Ein OS, das wirklich arbeitet</Badge>
           <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Alles, was ein echtes Team kann</h2>
-          <p className="mt-3 text-ink-soft">Von der Telefonannahme bis zur strategischen Beratung – deine KI-Mitarbeiter decken den gesamten Arbeitsalltag ab.</p>
+          <p className="mt-3 text-ink-soft">Vom Postfach bis zur strategischen Beratung — deine KI-Mitarbeiter decken den gesamten Arbeitsalltag ab.</p>
         </div>
         <Stagger className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (

@@ -39,7 +39,7 @@ export const revenueSeries: { label: string; value: number }[] = [
 
 export const workloadSplit: { label: string; value: number; color: string }[] = [
   { label: "Support", value: 38, color: "var(--color-success)" },
-  { label: "Termine & Telefon", value: 24, color: "var(--color-accent)" },
+  { label: "Termine & Postfach", value: 24, color: "var(--color-accent)" },
   { label: "Vertrieb", value: 18, color: "var(--color-warning)" },
   { label: "Dokumente", value: 12, color: "var(--color-cyan)" },
   { label: "Analyse", value: 8, color: "var(--color-violet)" },
