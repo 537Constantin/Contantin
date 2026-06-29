@@ -15,6 +15,7 @@ import { Stagger, StaggerItem } from "@/components/motion/reveal";
 import { employees } from "@/lib/data/employees";
 import { tasksForEmployee, type EmployeeTask, type UserTask } from "@/lib/data/tasks";
 import { loadItems, saveItems } from "@/lib/store-sync";
+import { tapHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import type { EmployeeRole } from "@/lib/types";
 
@@ -133,8 +134,11 @@ function EmployeesView() {
             >
               {/* Employee header row (toggle) */}
               <button
-                onClick={() => setExpanded(isOpen ? null : emp.id)}
-                className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-surface-soft/40"
+                onClick={() => {
+                  tapHaptic();
+                  setExpanded(isOpen ? null : emp.id);
+                }}
+                className="tap flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-surface-soft/40"
                 aria-expanded={isOpen}
               >
                 <GlowAvatar name={emp.name} color={emp.avatarColor} size="lg" />
@@ -174,8 +178,11 @@ function EmployeesView() {
                         return (
                           <li key={task.id}>
                             <button
-                              onClick={() => setActiveTask(task)}
-                              className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-all hover:border-accent/30 hover:shadow-[var(--shadow-soft)]"
+                              onClick={() => {
+                                tapHaptic();
+                                setActiveTask(task);
+                              }}
+                              className="tap group flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-all hover:border-accent/30 hover:shadow-[var(--shadow-soft)]"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">

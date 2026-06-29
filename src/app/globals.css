@@ -141,6 +141,9 @@
     scroll-behavior: smooth;
     scroll-padding-top: 6rem;
     -webkit-text-size-adjust: 100%;
+    /* No grey flash on tap, no rubber-band overscroll — feels app-native. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
   }
 
   body {
@@ -150,7 +153,12 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     font-feature-settings: "ss01", "cv01", "cv02";
+    /* Smooth momentum scrolling on iOS. */
+    -webkit-overflow-scrolling: touch;
   }
+
+  /* Don't let the on-screen keyboard / browser chrome shift form fonts. */
+  input, textarea, select, button { font: inherit; }
 
   ::selection {
     background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
@@ -309,9 +317,11 @@
   pointer-events: none;
   opacity: 0;
 }
-.sheen:hover::after {
-  opacity: 1;
-  animation: shine 0.9s var(--ease-lux);
+@media (hover: hover) {
+  .sheen:hover::after {
+    opacity: 1;
+    animation: shine 0.9s var(--ease-lux);
+  }
 }
 
 /* Cursor-follow spotlight — JS sets --mx/--my (see SpotlightCard). */
@@ -331,7 +341,9 @@
   pointer-events: none;
   z-index: 0;
 }
-.spotlight:hover::before { opacity: 1; }
+@media (hover: hover) {
+  .spotlight:hover::before { opacity: 1; }
+}
 
 /* Animated conic gradient ring that spins in on hover. */
 /* Uses ::after (spotlight owns ::before) so both can coexist on one element. */
@@ -357,10 +369,23 @@
   transition: opacity 0.45s var(--ease-lux);
   pointer-events: none;
 }
-.gradient-ring:hover::after {
-  opacity: 1;
-  animation: angle-spin 4s linear infinite;
+@media (hover: hover) {
+  .gradient-ring:hover::after {
+    opacity: 1;
+    animation: angle-spin 4s linear infinite;
+  }
 }
+
+/* Safe-area helpers for notch / home indicator (iPhone, iPad). */
+@utility pt-safe { padding-top: env(safe-area-inset-top); }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+@utility h-safe-bottom { height: env(safe-area-inset-bottom); }
+
+/* Tap feedback for touch surfaces (cards, rows). */
+@utility tap {
+  transition: transform 0.18s var(--ease-lux);
+}
+.tap:active { transform: scale(0.985); }
 
 @media (prefers-reduced-motion: reduce) {
   .sheen::after,

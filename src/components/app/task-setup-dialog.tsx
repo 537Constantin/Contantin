@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { GlowAvatar } from "@/components/ui/glow-avatar";
 import { getEmployee } from "@/lib/data/employees";
 import type { EmployeeTask, UserTask } from "@/lib/data/tasks";
+import { tapHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
 export function TaskSetupDialog({
@@ -47,6 +48,7 @@ export function TaskSetupDialog({
 
   function save() {
     onSave(task!.id, { values, configured: true, automated });
+    tapHaptic(automated ? [10, 40, 16] : 12);
     setSaved(true);
     window.setTimeout(() => onClose(), 1150);
   }
@@ -60,7 +62,7 @@ export function TaskSetupDialog({
   return (
     <AnimatePresence>
       {task && (
-        <div className="fixed inset-0 z-50 grid place-items-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
           <motion.div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -71,12 +73,14 @@ export function TaskSetupDialog({
           <motion.div
             role="dialog"
             aria-modal
-            className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-float)]"
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            className="pb-safe relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-float)] sm:max-w-lg sm:rounded-[var(--radius-card)] sm:pb-0"
+            initial={{ opacity: 0, y: 48, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.97 }}
+            exit={{ opacity: 0, y: 48, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
           >
+            {/* Grab handle (mobile bottom-sheet) */}
+            <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border sm:hidden" />
             {/* Success splash */}
             <AnimatePresence>
               {saved && (
@@ -215,7 +219,10 @@ export function TaskSetupDialog({
                       role="switch"
                       aria-checked={automated}
                       disabled={!configured}
-                      onClick={() => setAutomated((v) => !v)}
+                      onClick={() => {
+                        tapHaptic();
+                        setAutomated((v) => !v);
+                      }}
                       className={cn(
                         "relative h-6 w-11 shrink-0 rounded-full transition-colors",
                         automated ? "bg-accent" : "bg-surface-soft ring-1 ring-border",

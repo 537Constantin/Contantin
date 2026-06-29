@@ -14,7 +14,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="sticky top-0 z-30 glass border-b border-border"
+      className="sticky top-0 z-30 glass border-b border-border pt-[env(safe-area-inset-top)]"
     >
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
         <button
