@@ -23,12 +23,14 @@ export function TaskSetupDialog({
 }) {
   const [values, setValues] = React.useState<Record<string, string>>({});
   const [automated, setAutomated] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
 
   // Re-seed the form whenever a different task is opened.
   React.useEffect(() => {
     if (task) {
       setValues(userTask?.values ?? {});
       setAutomated(userTask?.automated ?? false);
+      setSaved(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id]);
@@ -45,7 +47,8 @@ export function TaskSetupDialog({
 
   function save() {
     onSave(task!.id, { values, configured: true, automated });
-    onClose();
+    setSaved(true);
+    window.setTimeout(() => onClose(), 1150);
   }
 
   function reset() {
@@ -74,6 +77,37 @@ export function TaskSetupDialog({
             exit={{ opacity: 0, y: 24, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
           >
+            {/* Success splash */}
+            <AnimatePresence>
+              {saved && (
+                <motion.div
+                  className="absolute inset-0 z-20 grid place-items-center bg-surface/85 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <div className="text-center">
+                    <motion.span
+                      className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success ring-1 ring-success/30"
+                      initial={{ scale: 0.4, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 380, damping: 18 }}
+                    >
+                      {automated ? <Zap className="h-8 w-8" /> : <Check className="h-8 w-8" />}
+                    </motion.span>
+                    <motion.p
+                      className="mt-4 font-display text-lg font-semibold text-ink"
+                      initial={{ y: 8, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.12 }}
+                    >
+                      {automated ? "Automatisierung aktiv" : "Aufgabe eingerichtet"}
+                    </motion.p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="flex items-start justify-between gap-3 border-b border-border px-6 py-4">
               <div className="flex items-start gap-3">
