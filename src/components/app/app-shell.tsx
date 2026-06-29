@@ -4,7 +4,7 @@ import * as React from "react";
 import { Sidebar, MobileSidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
 import { StoreCacheGuard } from "@/components/app/store-cache-guard";
-import { PageTransition } from "@/components/motion/fx";
+import { PageTransition, CursorGlow, ScrollProgress } from "@/components/motion/fx";
 import { clerkEnabled } from "@/lib/auth";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -12,10 +12,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative flex min-h-screen bg-canvas">
-      {/* Ambient drifting backdrop — subtle, monochrome, behind everything. */}
+      {/* Ambient drifting backdrop + film grain — subtle, behind everything. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -top-[18%] left-1/2 h-[72vh] w-[72vw] -translate-x-1/2 aurora animate-aurora" />
+        <div className="absolute inset-0 noise opacity-[0.5]" />
       </div>
+
+      {/* Top scroll progress + pointer-trailing glow */}
+      <ScrollProgress />
+      <CursorGlow />
 
       {clerkEnabled && <StoreCacheGuard />}
       <Sidebar />

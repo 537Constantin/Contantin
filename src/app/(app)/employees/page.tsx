@@ -11,6 +11,7 @@ import { StatusDot } from "@/components/app/status";
 import { CreateEmployeeDialog } from "@/components/app/create-employee-dialog";
 import { TaskSetupDialog } from "@/components/app/task-setup-dialog";
 import { SpotlightCard } from "@/components/motion/fx";
+import { Stagger, StaggerItem } from "@/components/motion/reveal";
 import { employees } from "@/lib/data/employees";
 import { tasksForEmployee, type EmployeeTask, type UserTask } from "@/lib/data/tasks";
 import { loadItems, saveItems } from "@/lib/store-sync";
@@ -115,7 +116,7 @@ function EmployeesView() {
         </label>
       </div>
 
-      <div className="mt-5 space-y-3">
+      <Stagger className="mt-5 space-y-3">
         {list.map((emp) => {
           const empTasks = tasksForEmployee(emp.id);
           const isOpen = expanded === emp.id;
@@ -124,9 +125,10 @@ function EmployeesView() {
           ).length;
 
           return (
+            <StaggerItem key={emp.id}>
             <SpotlightCard
-              key={emp.id}
               ring
+              tilt={!isOpen}
               className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-soft)] transition-shadow duration-300 [transition-timing-function:var(--ease-lux)] hover:shadow-[var(--shadow-glow)]"
             >
               {/* Employee header row (toggle) */}
@@ -200,6 +202,7 @@ function EmployeesView() {
                 </div>
               )}
             </SpotlightCard>
+            </StaggerItem>
           );
         })}
 
@@ -208,7 +211,7 @@ function EmployeesView() {
             Kein Mitarbeiter gefunden.
           </p>
         )}
-      </div>
+      </Stagger>
 
       <CreateEmployeeDialog open={open} onClose={() => setOpen(false)} />
       <TaskSetupDialog

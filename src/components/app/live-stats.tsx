@@ -36,7 +36,8 @@ export function LiveStats() {
       {items.map((it) => (
         <SpotlightCard
           key={it.label}
-          className="group rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/40 hover:shadow-[var(--shadow-glow)]"
+          tilt
+          className="group rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:border-accent/40 hover:shadow-[var(--shadow-glow)]"
         >
           <div className="flex items-start justify-between">
             <p className="text-sm text-muted">{it.label}</p>

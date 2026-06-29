@@ -7,7 +7,7 @@ import type { Kpi } from "@/lib/data/analytics";
 export function KpiCard({ kpi }: { kpi: Kpi }) {
   const positive = kpi.delta >= 0;
   return (
-    <SpotlightCard className="group relative overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/40 hover:shadow-[var(--shadow-glow)]">
+    <SpotlightCard tilt className="group relative overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:border-accent/40 hover:shadow-[var(--shadow-glow)]">
       <div className="flex items-start justify-between">
         <p className="text-sm text-muted">{kpi.label}</p>
         <span
