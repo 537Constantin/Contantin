@@ -29,7 +29,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                     href={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200",
+                      "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-[color,background-color,transform] duration-200 [transition-timing-function:var(--ease-lux)] hover:translate-x-0.5",
                       active
                         ? "bg-surface-soft text-ink"
                         : "text-ink-soft hover:bg-surface-soft hover:text-ink",
@@ -44,7 +44,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                     )}
                     <Icon
                       className={cn(
-                        "h-[18px] w-[18px] shrink-0 transition-colors",
+                        "h-[18px] w-[18px] shrink-0 transition-transform duration-300 [transition-timing-function:var(--ease-lux)] group-hover:scale-110",
                         active ? "text-accent" : "text-muted group-hover:text-ink",
                       )}
                     />
@@ -67,9 +67,9 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 function Brand() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-5">
-      <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] shadow-[var(--shadow-glow)]">
-        <Sparkles className="h-4.5 w-4.5 text-canvas" />
+    <Link href="/dashboard" className="group flex items-center gap-2.5 px-5 py-5">
+      <span className="sheen relative grid h-9 w-9 place-items-center rounded-xl bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))] shadow-[var(--shadow-glow)] transition-transform duration-300 [transition-timing-function:var(--ease-lux)] group-hover:scale-105">
+        <Sparkles className="h-4.5 w-4.5 text-canvas transition-transform duration-500 group-hover:rotate-12" />
       </span>
       <span className="text-[15px] font-semibold tracking-tight text-ink">
         Workforce<span className="text-gradient-brand"> OS</span>
@@ -112,7 +112,7 @@ const SidebarInner = ({ onNavigate }: { onNavigate?: () => void }) => (
 
 export function Sidebar() {
   return (
-    <aside className="hidden w-[264px] shrink-0 border-r border-border bg-surface/40 lg:block">
+    <aside className="relative z-10 hidden w-[264px] shrink-0 border-r border-border bg-surface/40 backdrop-blur-xl lg:block">
       <div className="sticky top-0 h-screen">
         <SidebarInner />
       </div>

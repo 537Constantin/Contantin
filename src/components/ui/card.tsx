@@ -11,7 +11,7 @@ export function Card({
       className={cn(
         "rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-soft)]",
         hover &&
-          "transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-[var(--shadow-glow)]",
+          "transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/40 hover:shadow-[var(--shadow-glow)]",
         className,
       )}
       {...props}

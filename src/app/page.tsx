@@ -6,6 +6,7 @@ import {
 import { MarketingNav } from "@/components/marketing/nav";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { Magnetic } from "@/components/motion/fx";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -44,7 +45,8 @@ export default function LandingPage() {
 
       {/* ambient grid (subtle, works on white & dark) */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-[-12%] h-[460px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-ink)_6%,transparent),transparent_70%)] blur-3xl" />
+        <div className="animate-float absolute left-1/2 top-[-12%] h-[460px] w-[760px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-ink)_6%,transparent),transparent_70%)] blur-3xl" />
+        <div className="animate-aurora absolute right-[8%] top-[18%] h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-cyan)_16%,transparent),transparent_70%)] blur-3xl" />
         <div className="absolute inset-0 grid-bg opacity-60 [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
       </div>
 
@@ -68,9 +70,11 @@ export default function LandingPage() {
         </Reveal>
         <Reveal delay={0.15}>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button asChild variant="accent" size="lg">
-              <Link href="/dashboard">Live-Demo öffnen <ArrowRight className="h-4 w-4" /></Link>
-            </Button>
+            <Magnetic>
+              <Button asChild variant="accent" size="lg">
+                <Link href="/dashboard">Live-Demo öffnen <ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+            </Magnetic>
             <Button asChild variant="outline" size="lg">
               <Link href="/employees">Mitarbeiter & Aufgaben ansehen</Link>
             </Button>

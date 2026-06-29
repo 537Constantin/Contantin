@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "motion/react";
 import { Menu, Search, Bell, Command } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/site/theme-toggle";
@@ -9,7 +10,12 @@ import { clerkEnabled } from "@/lib/auth";
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
   return (
-    <header className="sticky top-0 z-30 glass border-b border-border">
+    <motion.header
+      initial={{ opacity: 0, y: -16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-30 glass border-b border-border"
+    >
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
         <button
           onClick={onMenu}
@@ -58,6 +64,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
           )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

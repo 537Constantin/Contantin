@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusDot } from "@/components/app/status";
 import { CreateEmployeeDialog } from "@/components/app/create-employee-dialog";
 import { TaskSetupDialog } from "@/components/app/task-setup-dialog";
+import { SpotlightCard } from "@/components/motion/fx";
 import { employees } from "@/lib/data/employees";
 import { tasksForEmployee, type EmployeeTask, type UserTask } from "@/lib/data/tasks";
 import { loadItems, saveItems } from "@/lib/store-sync";
@@ -123,9 +124,10 @@ function EmployeesView() {
           ).length;
 
           return (
-            <div
+            <SpotlightCard
               key={emp.id}
-              className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-soft)]"
+              ring
+              className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-soft)] transition-shadow duration-300 [transition-timing-function:var(--ease-lux)] hover:shadow-[var(--shadow-glow)]"
             >
               {/* Employee header row (toggle) */}
               <button
@@ -197,7 +199,7 @@ function EmployeesView() {
                   )}
                 </div>
               )}
-            </div>
+            </SpotlightCard>
           );
         })}
 
