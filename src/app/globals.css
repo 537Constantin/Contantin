@@ -51,6 +51,10 @@
   --animate-pulse-soft: pulse-soft 2.4s var(--ease-lux) infinite;
   --animate-float: float 7s var(--ease-lux) infinite;
   --animate-spin-slow: spin 14s linear infinite;
+  --animate-aurora: aurora 20s var(--ease-lux) infinite;
+  --animate-shine: shine 1s var(--ease-lux);
+  --animate-gradient-x: gradient-x 5s ease infinite;
+  --animate-rise: rise 0.7s var(--ease-lux) both;
 
   @keyframes marquee {
     from { transform: translateX(0); }
@@ -68,6 +72,33 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
+  @keyframes aurora {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+    33%      { transform: translate3d(3%, -2%, 0) scale(1.12); opacity: 0.8; }
+    66%      { transform: translate3d(-2%, 3%, 0) scale(1.06); opacity: 0.65; }
+  }
+  @keyframes shine {
+    from { transform: translateX(-130%) skewX(-18deg); }
+    to   { transform: translateX(230%) skewX(-18deg); }
+  }
+  @keyframes gradient-x {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  @keyframes angle-spin {
+    to { --angle: 360deg; }
+  }
+}
+
+/* Animatable angle for conic gradient rings */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
 }
 
 /* Dark theme — clean near-black, white details */
@@ -229,4 +260,111 @@
     transparent 0
   );
   background-size: 5px 5px;
+}
+
+/* ============================================================
+   PREMIUM MOTION & EFFECTS
+   A small, cohesive toolkit reused across the whole app.
+   All effects are subtle, monochrome, and respect
+   prefers-reduced-motion (handled in @layer base).
+   ============================================================ */
+
+/* Ambient animated backdrop — soft drifting light, sits behind content. */
+@utility aurora {
+  background:
+    radial-gradient(38% 48% at 16% 18%, color-mix(in srgb, var(--color-ink) 8%, transparent), transparent 70%),
+    radial-gradient(34% 42% at 84% 14%, color-mix(in srgb, var(--color-cyan) 14%, transparent), transparent 70%),
+    radial-gradient(48% 52% at 62% 92%, color-mix(in srgb, var(--color-ink) 6%, transparent), transparent 72%);
+  filter: blur(46px);
+}
+
+/* Animated gradient text (headlines). */
+@utility text-shimmer {
+  background: linear-gradient(
+    110deg,
+    var(--color-ink) 30%,
+    var(--color-muted) 50%,
+    var(--color-ink) 70%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-x 5s linear infinite;
+}
+
+/* Diagonal light sweep on hover — for buttons & CTAs. Needs overflow-hidden. */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.38) 50%,
+    transparent 68%
+  );
+  transform: translateX(-130%) skewX(-18deg);
+  pointer-events: none;
+  opacity: 0;
+}
+.sheen:hover::after {
+  opacity: 1;
+  animation: shine 0.9s var(--ease-lux);
+}
+
+/* Cursor-follow spotlight — JS sets --mx/--my (see SpotlightCard). */
+.spotlight { position: relative; }
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--color-ink) 9%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-lux);
+  pointer-events: none;
+  z-index: 0;
+}
+.spotlight:hover::before { opacity: 1; }
+
+/* Animated conic gradient ring that spins in on hover. */
+/* Uses ::after (spotlight owns ::before) so both can coexist on one element. */
+.gradient-ring { position: relative; }
+.gradient-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angle),
+    color-mix(in srgb, var(--color-ink) 34%, transparent),
+    transparent 25%,
+    color-mix(in srgb, var(--color-cyan) 46%, transparent) 50%,
+    transparent 75%,
+    color-mix(in srgb, var(--color-ink) 34%, transparent)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-lux);
+  pointer-events: none;
+}
+.gradient-ring:hover::after {
+  opacity: 1;
+  animation: angle-spin 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen::after,
+  .spotlight::before,
+  .gradient-ring::after { display: none; }
+  .text-shimmer { animation: none; }
 }

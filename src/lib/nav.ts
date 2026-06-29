@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Users,
-  MessageSquare,
   Workflow,
   FileText,
   Phone,
@@ -31,7 +30,6 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "KI-Mitarbeiter", href: "/employees", icon: Users },
-      { label: "Chat", href: "/chat", icon: MessageSquare },
     ],
   },
   {

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Users, Play, Wand2, GraduationCap, type LucideIcon } from "lucide-react";
 import { employees } from "@/lib/data/employees";
+import { AnimatedCounter, SpotlightCard } from "@/components/motion/fx";
 import { loadItems } from "@/lib/store-sync";
 import type { UserWorkflow, WorkflowRun } from "@/lib/workflows-store";
 import type { UserSpecialization } from "@/lib/data/specializations";
@@ -33,17 +34,19 @@ export function LiveStats() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((it) => (
-        <div
+        <SpotlightCard
           key={it.label}
-          className="rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)]"
+          className="group rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/40 hover:shadow-[var(--shadow-glow)]"
         >
           <div className="flex items-start justify-between">
             <p className="text-sm text-muted">{it.label}</p>
-            <it.icon className="h-4 w-4 text-muted" />
+            <it.icon className="h-4 w-4 text-muted transition-transform duration-300 [transition-timing-function:var(--ease-lux)] group-hover:scale-110" />
           </div>
-          <p className="mt-2 font-display text-3xl font-semibold tracking-tight text-ink">{it.value}</p>
+          <p className="mt-2 font-display text-3xl font-semibold tracking-tight text-ink">
+            {typeof it.value === "number" ? <AnimatedCounter value={it.value} /> : it.value}
+          </p>
           <p className="mt-1 text-xs text-muted">{it.hint}</p>
-        </div>
+        </SpotlightCard>
       ))}
     </div>
   );

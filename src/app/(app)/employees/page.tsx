@@ -1,19 +1,20 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Plus, ArrowRight, Search } from "lucide-react";
+import { Plus, Search, ChevronDown, Check, Zap, ArrowRight, ListChecks } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { GlowAvatar } from "@/components/ui/glow-avatar";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { StatusDot } from "@/components/app/status";
 import { CreateEmployeeDialog } from "@/components/app/create-employee-dialog";
-import { employees, roleMeta } from "@/lib/data/employees";
-import { personalityMeta } from "@/lib/data/employees";
-import { formatNumber, cn } from "@/lib/utils";
+import { TaskSetupDialog } from "@/components/app/task-setup-dialog";
+import { SpotlightCard } from "@/components/motion/fx";
+import { employees } from "@/lib/data/employees";
+import { tasksForEmployee, type EmployeeTask, type UserTask } from "@/lib/data/tasks";
+import { loadItems, saveItems } from "@/lib/store-sync";
+import { cn } from "@/lib/utils";
 import type { EmployeeRole } from "@/lib/types";
 
 const filters: { key: EmployeeRole | "all"; label: string }[] = [
@@ -38,10 +39,35 @@ function EmployeesView() {
   const [open, setOpen] = React.useState(false);
   const [filter, setFilter] = React.useState<EmployeeRole | "all">("all");
   const [query, setQuery] = React.useState("");
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [activeTask, setActiveTask] = React.useState<EmployeeTask | null>(null);
+
+  // Per-user task state (configured / automated / values), synced to DB + localStorage.
+  const [userTasks, setUserTasks] = React.useState<UserTask[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    loadItems<UserTask>("task").then((t) => {
+      setUserTasks(t);
+      setLoaded(true);
+    });
+  }, []);
+  React.useEffect(() => {
+    if (loaded) void saveItems("task", userTasks);
+  }, [userTasks, loaded]);
 
   React.useEffect(() => {
     if (params.get("new") === "1") setOpen(true);
   }, [params]);
+
+  function patchUserTask(taskId: string, patch: Partial<UserTask>) {
+    setUserTasks((list) => {
+      const existing = list.find((u) => u.id === taskId);
+      const base: UserTask = existing ?? { id: taskId, configured: false, values: {}, automated: false, updatedAt: "" };
+      const updated: UserTask = { ...base, ...patch, updatedAt: new Date().toISOString() };
+      return existing ? list.map((u) => (u.id === taskId ? updated : u)) : [...list, updated];
+    });
+  }
 
   const list = employees.filter((e) => {
     const matchRole = filter === "all" || e.role === filter;
@@ -56,7 +82,7 @@ function EmployeesView() {
     <PageShell>
       <PageHeader
         title="KI-Mitarbeiter"
-        description="Erstelle und verwalte deine autonomen Agenten. Jeder hat eigenes Gedächtnis, eigene Tools und eigene Aufgaben."
+        description="Klapp einen Mitarbeiter auf, um seine Aufgaben zu sehen. Jede Aufgabe lässt sich einrichten und danach automatisieren."
       >
         <Button variant="accent" size="sm" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4" /> Neuer Mitarbeiter
@@ -89,70 +115,108 @@ function EmployeesView() {
         </label>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {list.map((emp) => (
-          <Link
-            key={emp.id}
-            href={`/employees/${emp.id}`}
-            className="group flex flex-col rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)] transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)] hover:-translate-y-1 hover:border-accent/30 hover:shadow-[var(--shadow-glow)]"
-          >
-            <div className="flex items-start gap-3">
-              <GlowAvatar name={emp.name} color={emp.avatarColor} size="lg" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-display text-lg font-semibold text-ink">{emp.name}</p>
-                  <StatusDot status={emp.status} />
+      <div className="mt-5 space-y-3">
+        {list.map((emp) => {
+          const empTasks = tasksForEmployee(emp.id);
+          const isOpen = expanded === emp.id;
+          const configuredCount = empTasks.filter(
+            (t) => userTasks.find((u) => u.id === t.id)?.configured,
+          ).length;
+
+          return (
+            <SpotlightCard
+              key={emp.id}
+              ring
+              className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-soft)] transition-shadow duration-300 [transition-timing-function:var(--ease-lux)] hover:shadow-[var(--shadow-glow)]"
+            >
+              {/* Employee header row (toggle) */}
+              <button
+                onClick={() => setExpanded(isOpen ? null : emp.id)}
+                className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-surface-soft/40"
+                aria-expanded={isOpen}
+              >
+                <GlowAvatar name={emp.name} color={emp.avatarColor} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2.5">
+                    <p className="font-display text-lg font-semibold text-ink">{emp.name}</p>
+                    <StatusDot status={emp.status} />
+                  </div>
+                  <p className="truncate text-sm text-muted">{emp.roleLabel}</p>
                 </div>
-                <p className="text-sm text-muted">{emp.roleLabel}</p>
-              </div>
-            </div>
-            <p className="mt-3 line-clamp-2 text-sm text-ink-soft">{emp.description}</p>
 
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {emp.skills.slice(0, 3).map((s) => (
-                <Badge key={s} variant="accent">{s}</Badge>
-              ))}
-              {emp.skills.length > 3 && <Badge variant="outline">+{emp.skills.length - 3}</Badge>}
-            </div>
+                <div className="hidden items-center gap-2 sm:flex">
+                  <Badge variant="outline">
+                    <ListChecks className="h-3.5 w-3.5" /> {empTasks.length} Aufgaben
+                  </Badge>
+                  {configuredCount > 0 && (
+                    <Badge variant="success"><Check className="h-3 w-3" /> {configuredCount} aktiv</Badge>
+                  )}
+                </div>
 
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-muted">
-                <span>Effizienz</span>
-                <span className="font-medium text-ink">{emp.performance}%</span>
-              </div>
-              <Progress value={emp.performance} tone="accent" className="mt-1.5" />
-            </div>
+                <ChevronDown
+                  className={cn("h-5 w-5 shrink-0 text-muted transition-transform", isOpen && "rotate-180")}
+                />
+              </button>
 
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm">
-              <span className="text-muted">
-                <span className="font-semibold text-ink">{formatNumber(emp.tasksCompleted)}</span> erledigt
-              </span>
-              <span className="text-muted">
-                <span className="font-semibold text-ink">{emp.hoursSaved} h</span> gespart
-              </span>
-              <span className="inline-flex items-center gap-1 font-medium text-accent opacity-0 transition-opacity group-hover:opacity-100">
-                Profil <ArrowRight className="h-3.5 w-3.5" />
-              </span>
-            </div>
-            <span className="mt-3 text-xs text-muted">{personalityMeta[emp.personality]}</span>
-          </Link>
-        ))}
+              {/* Expanded: nur die Aufgaben */}
+              {isOpen && (
+                <div className="border-t border-border bg-surface-soft/20 px-3 py-3 sm:px-4">
+                  {empTasks.length === 0 ? (
+                    <p className="px-1.5 py-4 text-sm text-muted">
+                      Für {emp.name} sind noch keine Aufgaben hinterlegt.
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {empTasks.map((task) => {
+                        const ut = userTasks.find((u) => u.id === task.id);
+                        return (
+                          <li key={task.id}>
+                            <button
+                              onClick={() => setActiveTask(task)}
+                              className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-all hover:border-accent/30 hover:shadow-[var(--shadow-soft)]"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium text-ink">{task.title}</p>
+                                  {ut?.configured && (
+                                    <Badge variant="success"><Check className="h-3 w-3" /> Eingerichtet</Badge>
+                                  )}
+                                  {ut?.automated && (
+                                    <Badge variant="accent"><Zap className="h-3 w-3" /> Automatisiert</Badge>
+                                  )}
+                                </div>
+                                <p className="mt-0.5 line-clamp-1 text-sm text-muted">{task.description}</p>
+                              </div>
+                              <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-accent opacity-0 transition-opacity group-hover:opacity-100">
+                                {ut?.configured ? "Verwalten" : "Einrichten"}
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </SpotlightCard>
+          );
+        })}
 
-        <button
-          onClick={() => setOpen(true)}
-          className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-border text-muted transition-colors hover:border-accent/40 hover:text-accent"
-        >
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-surface-soft">
-            <Plus className="h-6 w-6" />
-          </span>
-          <span className="text-sm font-medium">Neuen KI-Mitarbeiter erstellen</span>
-          <span className="max-w-[200px] text-center text-xs text-muted">
-            Aus {Object.keys(roleMeta).length} Rollen wählen und in unter einer Minute live gehen
-          </span>
-        </button>
+        {list.length === 0 && (
+          <p className="rounded-[var(--radius-card)] border border-dashed border-border py-10 text-center text-sm text-muted">
+            Kein Mitarbeiter gefunden.
+          </p>
+        )}
       </div>
 
       <CreateEmployeeDialog open={open} onClose={() => setOpen(false)} />
+      <TaskSetupDialog
+        task={activeTask}
+        userTask={activeTask ? userTasks.find((u) => u.id === activeTask.id) : undefined}
+        onClose={() => setActiveTask(null)}
+        onSave={patchUserTask}
+      />
     </PageShell>
   );
 }

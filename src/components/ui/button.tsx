@@ -38,9 +38,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         ref={ref}
         className={cn(
-          "group relative inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-tight",
+          "sheen group relative inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-tight",
           "transition-[transform,background-color,filter,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-lux)]",
-          "active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
+          "hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
           variants[variant],
           sizes[size],
