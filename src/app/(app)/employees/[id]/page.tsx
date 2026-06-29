@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowLeft, MessageSquare, Settings2, Cpu, Wrench, Brain, Clock } from "lucide-react";
+import { ArrowLeft, ListChecks, Settings2, Cpu, Wrench, Brain, Clock } from "lucide-react";
 import { PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,8 +59,8 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             <Settings2 className="h-4 w-4" /> Konfigurieren
           </Button>
           <Button variant="accent" size="sm" asChild>
-            <Link href={`/chat?agent=${emp.id}`}>
-              <MessageSquare className="h-4 w-4" /> Chatten
+            <Link href="/employees">
+              <ListChecks className="h-4 w-4" /> Aufgaben
             </Link>
           </Button>
         </div>

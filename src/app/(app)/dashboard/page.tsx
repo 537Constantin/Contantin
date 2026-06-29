@@ -37,8 +37,8 @@ export default function DashboardPage() {
           <Link href="/analytics">Analyse</Link>
         </Button>
         <Button variant="accent" size="sm" asChild>
-          <Link href="/chat">
-            <Sparkles className="h-4 w-4" /> Team fragen
+          <Link href="/employees">
+            <Sparkles className="h-4 w-4" /> Aufgaben einrichten
           </Link>
         </Button>
       </PageHeader>

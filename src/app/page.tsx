@@ -72,7 +72,7 @@ export default function LandingPage() {
               <Link href="/dashboard">Live-Demo öffnen <ArrowRight className="h-4 w-4" /></Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/chat">Mit einem Agenten chatten</Link>
+              <Link href="/employees">Mitarbeiter & Aufgaben ansehen</Link>
             </Button>
           </div>
           <p className="mt-4 text-xs text-muted">Keine Kreditkarte nötig · DSGVO-konform · In der EU gehostet</p>
