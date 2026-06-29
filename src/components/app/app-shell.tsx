@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Sidebar, MobileSidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
+import { BottomNav } from "@/components/app/bottom-nav";
 import { StoreCacheGuard } from "@/components/app/store-cache-guard";
 import { PageTransition, CursorGlow, ScrollProgress } from "@/components/motion/fx";
 import { clerkEnabled } from "@/lib/auth";
@@ -27,10 +28,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <Topbar onMenu={() => setMobileOpen(true)} />
-        <main className="flex-1">
+        {/* Extra bottom space on mobile so content clears the tab bar + home indicator. */}
+        <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)_+_4.5rem)] lg:pb-0">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
+
+      {/* App-native bottom tab bar (phones / iPad portrait) */}
+      <BottomNav onMenu={() => setMobileOpen(true)} />
     </div>
   );
 }
