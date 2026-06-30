@@ -15,7 +15,8 @@
     "db:studio": "prisma studio",
     "cap:sync": "cap sync",
     "cap:ios": "cap open ios",
-    "cap:android": "cap open android"
+    "cap:android": "cap open android",
+    "icons": "node scripts/generate-app-icons.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^6.0.2",

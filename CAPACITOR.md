@@ -72,13 +72,24 @@ In Android Studio einen Emulator oder ein angeschlossenes Gerät wählen → **R
 
 ## App-Icon & Splash-Screen
 
-Am einfachsten mit dem offiziellen Asset-Generator:
+Icon und Splash sind **schon erzeugt**. Die Quell-Assets liegen unter
+`assets/icon.png` (1024×1024) und `assets/splash.png` (2732×2732). Daraus
+generierst du alle nativen Größen mit dem offiziellen Generator:
 
 ```bash
 npm i -D @capacitor/assets
-# Lege ein 1024x1024 Logo unter assets/icon.png und assets/splash.png ab, dann:
 npx @capacitor/assets generate --ios --android
 ```
+
+Willst du das Logo ändern: das Design lebt in `scripts/generate-app-icons.mjs`
+(reines SVG, kein Designtool nötig). Nach Anpassung neu erzeugen mit:
+
+```bash
+npm run icons
+```
+
+Das aktualisiert in einem Rutsch die Web-Icons (Favicon, iOS-Home-Icon,
+PWA-Manifest, iOS-Splash) **und** die Capacitor-Quell-Assets.
 
 ---
 
