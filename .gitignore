@@ -31,3 +31,15 @@ next-env.d.ts
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# capacitor native build artifacts (the ios/ and android/ projects are
+# generated on a Mac via `npx cap add` and contain build output / Pods)
+/ios/App/Pods
+/ios/App/build
+/ios/App/App/public
+/ios/DerivedData
+/android/.gradle
+/android/build
+/android/app/build
+/android/app/src/main/assets/public
+/android/capacitor-cordova-android-plugins

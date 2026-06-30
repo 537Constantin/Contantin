@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AI Workforce OS</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        color: #09090b;
+      }
+      .wrap {
+        display: grid;
+        place-items: center;
+        height: 100%;
+        text-align: center;
+        padding: 24px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #09090b;
+        animation: pulse 1.2s ease-in-out infinite;
+        margin: 0 auto 16px;
+      }
+      @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+      p { color: #71717a; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Fallback web root for the native shell. In normal operation the app loads
+      the live deployment via server.url (see capacitor.config.ts); this screen
+      only shows briefly or if the device is offline.
+    -->
+    <div class="wrap">
+      <div>
+        <div class="dot"></div>
+        <p>AI Workforce OS wird geladen …</p>
+      </div>
+    </div>
+  </body>
+</html>
