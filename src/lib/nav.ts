@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   Users,
   Workflow,
+  Mail,
   FileText,
   Phone,
   BarChart3,
@@ -36,6 +37,7 @@ export const navGroups: NavGroup[] = [
     label: "Betrieb",
     items: [
       { label: "Workflows", href: "/workflows", icon: Workflow },
+      { label: "KI-E-Mail", href: "/email", icon: Mail, badge: "Live" },
       { label: "Spezialisierungen", href: "/specializations", icon: GraduationCap, badge: "Neu" },
       { label: "Dokumente", href: "/documents", icon: FileText },
       { label: "Telefon", href: "/calls", icon: Phone },
