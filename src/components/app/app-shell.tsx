@@ -4,6 +4,7 @@ import * as React from "react";
 import { Sidebar, MobileSidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
 import { BottomNav } from "@/components/app/bottom-nav";
+import { NativeInit } from "@/components/app/native-init";
 import { StoreCacheGuard } from "@/components/app/store-cache-guard";
 import { PageTransition, CursorGlow, ScrollProgress } from "@/components/motion/fx";
 import { clerkEnabled } from "@/lib/auth";
@@ -23,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <ScrollProgress />
       <CursorGlow />
 
+      <NativeInit />
       {clerkEnabled && <StoreCacheGuard />}
       <Sidebar />
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
