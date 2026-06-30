@@ -72,7 +72,7 @@ function Brand() {
         <Sparkles className="h-4.5 w-4.5 text-canvas transition-transform duration-500 group-hover:rotate-12" />
       </span>
       <span className="text-[15px] font-semibold tracking-tight text-ink">
-        Workforce<span className="text-gradient-brand"> OS</span>
+        Smart<span className="text-gradient-brand">Staff</span>
       </span>
     </Link>
   );

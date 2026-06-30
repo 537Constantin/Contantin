@@ -64,7 +64,7 @@ export default function LandingPage() {
         </Reveal>
         <Reveal delay={0.1}>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-ink-soft text-balance">
-            AI Workforce OS gibt deinem Unternehmen autonome KI-Mitarbeiter, die Telefon, Termine,
+            SmartStaff gibt deinem Unternehmen autonome KI-Mitarbeiter, die Telefon, Termine,
             E-Mails, Support, Dokumente und Beratung übernehmen. Wie ein echtes Team – nur rund um die Uhr.
           </p>
         </Reveal>

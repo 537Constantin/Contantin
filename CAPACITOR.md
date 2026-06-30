@@ -119,10 +119,10 @@ Capacitor-Version, iOS-Berechtigungen).
 
 ## Konfiguration im Code
 
-- `capacitor.config.ts` — App-ID (`com.contantin.workforce`), Name, `server.url`, Splash.
+- `capacitor.config.ts` — App-ID (`com.smartstaff.app`), Name, `server.url`, Splash.
 - `src/lib/native.ts` — native Initialisierung (Status-Bar, Splash, Back-Button).
 - `src/lib/haptics.ts` — echtes Haptik nativ, Vibration im Web.
 - `src/components/app/native-init.tsx` — startet die native Init beim App-Start.
 
-Die App-ID `com.contantin.workforce` kannst du vor dem ersten Build noch in
+Die App-ID `com.smartstaff.app` kannst du vor dem ersten Build noch in
 `capacitor.config.ts` ändern (muss zu deiner Apple-Bundle-ID passen).
