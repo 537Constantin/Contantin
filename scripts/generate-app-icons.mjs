@@ -63,18 +63,29 @@ function iconSvg(size) {
 </svg>`;
 }
 
-/** Splash: white canvas with a centered rounded logo tile. Any aspect ratio. */
+/** Splash: dark navy canvas with the centered glowing team logo (no tile/text).
+ *  Matches the in-app loading screen so the launch is seamless. */
 function splashSvg(w, h) {
-  const tile = Math.min(w, h) * 0.24;
-  const x = (w - tile) / 2;
-  const y = (h - tile) / 2;
-  const r = tile * 0.235;
-  const k = (tile * 0.64) / 76;
+  const cx = w / 2;
+  const cy = h * 0.42;
+  const k = (w * 0.34) / 76;
+  const glow = Math.max(w, h) * 0.16;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <defs>${DEFS}</defs>
-  <rect width="${w}" height="${h}" fill="#ffffff"/>
-  <rect x="${x}" y="${y}" width="${tile}" height="${tile}" rx="${r}" fill="url(#bg)"/>
-  <g transform="translate(${x + tile / 2} ${y + tile / 2}) scale(${k}) translate(-50 -53)">${PEOPLE}</g>
+  <defs>
+    ${DEFS}
+    <radialGradient id="bgr" cx="0.5" cy="0.34" r="0.85">
+      <stop offset="0" stop-color="#18203a"/>
+      <stop offset="0.58" stop-color="#0a0e1a"/>
+      <stop offset="1" stop-color="#070a12"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#4a96e6" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#4a96e6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="url(#bgr)"/>
+  <ellipse cx="${cx}" cy="${cy}" rx="${glow}" ry="${glow}" fill="url(#glow)"/>
+  <g transform="translate(${cx} ${cy}) scale(${k}) translate(-50 -53)">${PEOPLE}</g>
 </svg>`;
 }
 

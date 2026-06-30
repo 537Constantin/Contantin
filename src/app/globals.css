@@ -92,6 +92,10 @@
   @keyframes angle-spin {
     to { --angle: 360deg; }
   }
+  @keyframes loadbar {
+    from { width: 6%; }
+    to { width: 100%; }
+  }
 }
 
 /* Animatable angle for conic gradient rings */
