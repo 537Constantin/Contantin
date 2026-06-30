@@ -14,7 +14,7 @@ export function SplashScreen() {
   const [gone, setGone] = React.useState(false);
 
   React.useEffect(() => {
-    const t = window.setTimeout(() => setHiding(true), 1400);
+    const t = window.setTimeout(() => setHiding(true), 2000);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -35,7 +35,7 @@ export function SplashScreen() {
       )}
       style={{
         background:
-          "radial-gradient(120% 88% at 50% 30%, #18203a 0%, #0a0e1a 58%, #070a12 100%)",
+          "radial-gradient(115% 80% at 50% 44%, #1a2238 0%, #0a0e1a 52%, #05070e 100%)",
       }}
     >
       {/* Logo + wordmark */}
@@ -74,7 +74,7 @@ export function SplashScreen() {
               width: "100%",
               background: "linear-gradient(90deg, #46dccb 0%, #5b8cf0 52%, #9b7cf6 100%)",
               boxShadow: "0 0 16px rgba(91,140,240,0.65)",
-              animation: "loadbar 1.35s var(--ease-lux) forwards",
+              animation: "loadbar 1.7s var(--ease-lux) both",
             }}
           />
         </div>

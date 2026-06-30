@@ -92,10 +92,13 @@
   @keyframes angle-spin {
     to { --angle: 360deg; }
   }
-  @keyframes loadbar {
-    from { width: 6%; }
-    to { width: 100%; }
-  }
+}
+
+/* Loading-bar fill — defined outside @theme so it's always emitted (it's
+   referenced by raw CSS in the splash, not a Tailwind animate-* utility). */
+@keyframes loadbar {
+  from { width: 4%; }
+  to { width: 100%; }
 }
 
 /* Animatable angle for conic gradient rings */

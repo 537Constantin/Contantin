@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: siteConfig.shortName,
-    statusBarStyle: "default",
+    statusBarStyle: "black",
     startupImage: [
       { url: "/apple-splash-2048x2732.png", media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" },
       { url: "/apple-splash-1290x2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" },
@@ -68,10 +68,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f8fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#06070d" },
-  ],
+  // Dark status-bar tint everywhere so the launch/splash has no light strip.
+  themeColor: "#0a0e1a",
   width: "device-width",
   initialScale: 1,
   // Let content extend under the notch / home indicator; we pad via safe-area.
