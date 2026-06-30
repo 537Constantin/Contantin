@@ -24,15 +24,15 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "always",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#0a0e1a",
   },
   android: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#0a0e1a",
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 700,
-      backgroundColor: "#ffffff",
+      launchShowDuration: 600,
+      backgroundColor: "#0a0e1a",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
     },

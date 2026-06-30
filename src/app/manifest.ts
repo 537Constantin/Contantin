@@ -8,9 +8,9 @@ export default function manifest(): MetadataRoute.Manifest {
     description: siteConfig.description,
     start_url: "/dashboard",
     display: "standalone",
-    // White matches the generated splash + the app's light default theme.
-    background_color: "#ffffff",
-    theme_color: "#ffffff",
+    // Dark navy matches the launch/splash screen; the app content is light.
+    background_color: "#0a0e1a",
+    theme_color: "#0a0e1a",
     orientation: "portrait",
     categories: ["business", "productivity"],
     icons: [
