@@ -1,12 +1,12 @@
 export const siteConfig = {
-  name: "AI Workforce OS",
-  shortName: "Workforce OS",
+  name: "SmartStaff",
+  shortName: "SmartStaff",
   tagline: "Dein Unternehmen. Eine KI-Belegschaft.",
   description:
-    "AI Workforce OS ist das Betriebssystem für KI-Mitarbeiter. Erstelle autonome KI-Agenten, die Telefon, Termine, E-Mails, Support, Dokumente und Beratung übernehmen – wie ein echtes digitales Team.",
+    "SmartStaff ist das Betriebssystem für KI-Mitarbeiter. Erstelle autonome KI-Agenten, die Telefon, Termine, E-Mails, Support, Dokumente und Beratung übernehmen – wie ein echtes digitales Team.",
   url: "https://workforce-os.app",
   locale: "de_DE",
-  founder: "AI Workforce OS",
+  founder: "SmartStaff",
   social: {
     x: "https://x.com/workforceos",
     linkedin: "https://www.linkedin.com/company/workforceos",

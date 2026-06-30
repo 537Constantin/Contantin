@@ -47,9 +47,9 @@ function demoSchedule(graph: Graph) {
 function systemPromptFor(agentId?: string) {
   const emp = employees.find((e) => e.id === agentId);
   if (!emp) {
-    return "Du bist AI Workforce OS, ein Team aus spezialisierten KI-Mitarbeitern. Antworte professionell, präzise und auf Deutsch. Hilf bei Organisation, Support, Beratung und Automatisierung. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.";
+    return "Du bist SmartStaff, ein Team aus spezialisierten KI-Mitarbeitern. Antworte professionell, präzise und auf Deutsch. Hilf bei Organisation, Support, Beratung und Automatisierung. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.";
   }
-  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei AI Workforce OS. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${emp.personality === "concise" ? "knapp und effizient" : emp.personality === "empathetic" ? "empathisch und geduldig" : emp.personality === "friendly" ? "freundlich und nahbar" : emp.personality === "visionary" ? "strategisch und visionär" : "professionell und präzise"} auf Deutsch. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.`;
+  return `Du bist ${emp.name}, ein ${emp.roleLabel} bei SmartStaff. ${emp.description} Deine Fähigkeiten: ${emp.skills.join(", ")}. Antworte ${emp.personality === "concise" ? "knapp und effizient" : emp.personality === "empathetic" ? "empathisch und geduldig" : emp.personality === "friendly" ? "freundlich und nahbar" : emp.personality === "visionary" ? "strategisch und visionär" : "professionell und präzise"} auf Deutsch. Antworte so kurz wie möglich bei vollem Nutzen – in der Regel 2–5 kurze Sätze, immer vollständig.`;
 }
 
 /** Stream a string token-by-token as Server-Sent-Event-like chunks. */

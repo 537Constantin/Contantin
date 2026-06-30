@@ -24,7 +24,7 @@ export function MarketingNav() {
             <Sparkles className="h-4 w-4 text-canvas" />
           </span>
           <span className="text-sm font-semibold tracking-tight text-ink">
-            Workforce<span className="text-gradient-brand"> OS</span>
+            Smart<span className="text-gradient-brand">Staff</span>
           </span>
         </Link>
 

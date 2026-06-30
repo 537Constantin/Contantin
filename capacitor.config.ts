@@ -15,8 +15,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * point `webDir` at the export output instead of using `server.url`.
  */
 const config: CapacitorConfig = {
-  appId: "com.contantin.workforce",
-  appName: "AI Workforce OS",
+  appId: "com.smartstaff.app",
+  appName: "SmartStaff",
   webDir: "capacitor-www",
   server: {
     url: "https://contantin-aywb.vercel.app",

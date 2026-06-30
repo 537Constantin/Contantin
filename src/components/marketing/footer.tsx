@@ -40,7 +40,7 @@ export function MarketingFooter() {
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-accent),var(--color-cyan))]">
               <Sparkles className="h-4 w-4 text-canvas" />
             </span>
-            <span className="text-sm font-semibold tracking-tight text-ink">Workforce<span className="text-gradient-brand"> OS</span></span>
+            <span className="text-sm font-semibold tracking-tight text-ink">Smart<span className="text-gradient-brand">Staff</span></span>
           </Link>
           <p className="mt-3 max-w-xs text-sm text-muted">{siteConfig.tagline}</p>
         </div>

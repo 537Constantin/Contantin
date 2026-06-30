@@ -17,7 +17,7 @@ export default function SignInPage() {
             <Sparkles className="h-4.5 w-4.5 text-canvas" />
           </span>
           <span className="text-lg font-semibold tracking-tight text-ink">
-            Workforce<span className="text-gradient-brand"> OS</span>
+            Smart<span className="text-gradient-brand">Staff</span>
           </span>
         </Link>
         <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/dashboard" />

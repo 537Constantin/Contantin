@@ -387,7 +387,7 @@ function ChatView() {
           )}
         </form>
         <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-muted">
-          AI Workforce OS kann Fehler machen. Wichtige Informationen bitte prüfen.
+          SmartStaff kann Fehler machen. Wichtige Informationen bitte prüfen.
         </p>
       </div>
     </div>

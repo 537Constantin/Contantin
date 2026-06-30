@@ -1,7 +1,10 @@
 /**
  * Generates all app icons + splash screens from one SVG logo.
  *
- *   node scripts/generate-app-icons.mjs
+ *   node scripts/generate-app-icons.mjs   (or: npm run icons)
+ *
+ * Logo: a "team" of three people (teal / blue / purple gradients) on a dark
+ * tile — the SmartStaff mark.
  *
  * Outputs:
  *  - src/app/icon.png, src/app/apple-icon.png   (browser tab + iOS home icon, auto-linked by Next)
@@ -13,56 +16,65 @@ import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 
-const SPARK =
-  "M12 2C12 6.5 17.5 12 22 12 17.5 12 12 17.5 12 22 12 17.5 6.5 12 2 12 6.5 12 12 6.5 12 2Z";
+/** Shared gradient defs (unique ids per svg are fine since each file is standalone). */
+const DEFS = `
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#1b2236"/>
+    <stop offset="1" stop-color="#0a0e1a"/>
+  </linearGradient>
+  <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#46dccb"/>
+    <stop offset="1" stop-color="#1fb4c6"/>
+  </linearGradient>
+  <linearGradient id="blue" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#6b9bf4"/>
+    <stop offset="1" stop-color="#3a5fe0"/>
+  </linearGradient>
+  <linearGradient id="purple" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#a182f7"/>
+    <stop offset="1" stop-color="#7a4ad4"/>
+  </linearGradient>`;
 
-/** Full-bleed app icon (dark tile + white spark). Safe for maskable. */
+/** Three people, designed in a 100×100 box (visual center ≈ 50,53). */
+const PEOPLE = `
+  <!-- left (teal) -->
+  <g fill="url(#teal)">
+    <circle cx="27" cy="45" r="9.5"/>
+    <path d="M11 82 A17 21 0 0 1 45 82 Z"/>
+  </g>
+  <!-- right (purple) -->
+  <g fill="url(#purple)">
+    <circle cx="73" cy="45" r="9.5"/>
+    <path d="M55 82 A17 21 0 0 1 89 82 Z"/>
+  </g>
+  <!-- center (blue), in front with a thin dark separation -->
+  <g fill="url(#blue)" stroke="#0c1019" stroke-width="2.4" stroke-linejoin="round">
+    <circle cx="50" cy="38" r="12.5"/>
+    <path d="M27 80 A23 27 0 0 1 73 80 Z"/>
+  </g>`;
+
+/** Full-bleed app icon (dark tile + the three people). Safe for maskable. */
 function iconSvg(size) {
-  const c = size / 2;
-  const s = size * 0.0275; // spark scale (≈ 58% of canvas)
-  const a = size * 0.009; // accent spark scale
+  const k = (size * 0.64) / 76; // people content (~76 wide) → ~64% of canvas
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1c1c20"/>
-      <stop offset="1" stop-color="#000000"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.34" r="0.62">
-      <stop offset="0" stop-color="#43434c"/>
-      <stop offset="1" stop-color="#43434c" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
+  <defs>${DEFS}</defs>
   <rect width="${size}" height="${size}" fill="url(#bg)"/>
-  <rect width="${size}" height="${size}" fill="url(#glow)"/>
-  <g transform="translate(${c} ${c}) scale(${s}) translate(-12 -12)">
-    <path d="${SPARK}" fill="#ffffff"/>
-  </g>
-  <g transform="translate(${size * 0.7} ${size * 0.32}) scale(${a}) translate(-12 -12)" opacity="0.85">
-    <path d="${SPARK}" fill="#a1a1aa"/>
-  </g>
+  <g transform="translate(${size / 2} ${size / 2}) scale(${k}) translate(-50 -53)">${PEOPLE}</g>
 </svg>`;
 }
 
 /** Splash: white canvas with a centered rounded logo tile. Any aspect ratio. */
 function splashSvg(w, h) {
-  const tile = Math.min(w, h) * 0.22;
+  const tile = Math.min(w, h) * 0.24;
   const x = (w - tile) / 2;
   const y = (h - tile) / 2;
-  const c = tile / 2;
-  const s = tile * 0.024;
   const r = tile * 0.235;
+  const k = (tile * 0.64) / 76;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1c1c20"/>
-      <stop offset="1" stop-color="#000000"/>
-    </linearGradient>
-  </defs>
+  <defs>${DEFS}</defs>
   <rect width="${w}" height="${h}" fill="#ffffff"/>
   <rect x="${x}" y="${y}" width="${tile}" height="${tile}" rx="${r}" fill="url(#bg)"/>
-  <g transform="translate(${x + c} ${y + c}) scale(${s}) translate(-12 -12)">
-    <path d="${SPARK}" fill="#ffffff"/>
-  </g>
+  <g transform="translate(${x + tile / 2} ${y + tile / 2}) scale(${k}) translate(-50 -53)">${PEOPLE}</g>
 </svg>`;
 }
 
@@ -72,13 +84,8 @@ async function out(path, buf) {
   console.log("✓", path);
 }
 
-async function icon(path, size) {
-  await out(path, Buffer.from(iconSvg(size)));
-}
-
-async function splash(path, w, h) {
-  await out(path, Buffer.from(splashSvg(w, h)));
-}
+const icon = (path, size) => out(path, Buffer.from(iconSvg(size)));
+const splash = (path, w, h) => out(path, Buffer.from(splashSvg(w, h)));
 
 await Promise.all([
   // Browser tab + iOS home-screen icon (Next auto-links these)
@@ -98,4 +105,4 @@ await Promise.all([
   splash("public/apple-splash-1170x2532.png", 1170, 2532), // iPhone 12–14
 ]);
 
-console.log("\nAlle App-Icons & Splash-Screens erzeugt.");
+console.log("\nAlle App-Icons & Splash-Screens (SmartStaff) erzeugt.");

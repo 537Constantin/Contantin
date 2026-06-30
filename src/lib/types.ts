@@ -1,5 +1,5 @@
 /**
- * Domain types for AI Workforce OS.
+ * Domain types for SmartStaff.
  * Mirrors the Prisma schema in prisma/schema.prisma so the UI layer and the
  * (future) persistence layer share a single mental model.
  */
