@@ -8,7 +8,7 @@
  * (loadGraphs, loadUserDocuments, …) stay as the local layer and are kept fresh
  * by saveItems, so incidental readers (e.g. the chat) keep working too.
  */
-export type StoreKind = "workflow" | "document" | "graph" | "call" | "phone" | "run" | "specialization" | "task";
+export type StoreKind = "workflow" | "document" | "graph" | "call" | "phone" | "run" | "specialization" | "task" | "event";
 
 const LOCAL_KEY: Record<StoreKind, string> = {
   workflow: "workforce-os:workflows",
@@ -19,6 +19,7 @@ const LOCAL_KEY: Record<StoreKind, string> = {
   run: "workforce-os:runs",
   specialization: "workforce-os:specializations",
   task: "workforce-os:tasks",
+  event: "workforce-os:events",
 };
 
 /** Remembered after the first load so saves can skip the network when off. */

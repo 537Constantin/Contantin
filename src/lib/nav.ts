@@ -3,6 +3,7 @@ import {
   Users,
   Workflow,
   Mail,
+  CalendarDays,
   FileText,
   Phone,
   BarChart3,
@@ -36,6 +37,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "Betrieb",
     items: [
+      { label: "Kalender", href: "/calendar", icon: CalendarDays },
       { label: "Workflows", href: "/workflows", icon: Workflow },
       { label: "KI-E-Mail", href: "/email", icon: Mail, badge: "Live" },
       { label: "Spezialisierungen", href: "/specializations", icon: GraduationCap, badge: "Neu" },
