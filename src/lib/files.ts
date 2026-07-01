@@ -76,6 +76,19 @@ export function formatBytes(bytes: number): string {
 // Documents library (localStorage)
 // ---------------------------------------------------------------------------
 
+export interface DocAnalysis {
+  summary: string;
+  keyFacts: string[];
+  tags: string[];
+  category: string;
+  at: string;
+}
+
+export interface DocQA {
+  q: string;
+  a: string;
+}
+
 export interface UserDocument {
   id: string;
   name: string;
@@ -85,6 +98,10 @@ export interface UserDocument {
   /** Extracted text for readable files (capped); null for binary files. */
   text: string | null;
   createdAt: string;
+  /** Real AI analysis, produced on demand and persisted with the document. */
+  analysis?: DocAnalysis;
+  /** Questions the user asked about this document, with the AI's answers. */
+  qa?: DocQA[];
 }
 
 const KEY = "workforce-os:documents";

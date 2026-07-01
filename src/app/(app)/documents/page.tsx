@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
   Upload, FileText, FileSpreadsheet, FileImage, FileAudio, File as FileIcon,
-  Search, Sparkles, Trash2, Eye, EyeOff,
+  Search, Sparkles, Trash2, Eye, EyeOff, Loader2, Send, ListChecks, HelpCircle,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,9 +14,10 @@ import { formatRelativeTime, cn } from "@/lib/utils";
 import type { DocumentItem } from "@/lib/types";
 import {
   fileToDocument, formatBytes,
-  type UserDocument, type DocKind,
+  type UserDocument, type DocKind, type DocAnalysis,
 } from "@/lib/files";
 import { loadItems, saveItems } from "@/lib/store-sync";
+import { tapHaptic } from "@/lib/haptics";
 
 const kindIcon: Record<DocKind, typeof FileText> = {
   text: FileText, pdf: FileText, docx: FileIcon, xlsx: FileSpreadsheet,
@@ -33,7 +33,6 @@ const exampleTypeIcon = {
 } as const;
 
 export default function DocumentsPage() {
-  const router = useRouter();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [docs, setDocs] = React.useState<UserDocument[]>([]);
   const [loaded, setLoaded] = React.useState(false);
@@ -41,6 +40,7 @@ export default function DocumentsPage() {
   const [dragging, setDragging] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [openId, setOpenId] = React.useState<string | null>(null);
+  const [analyzingId, setAnalyzingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     void loadItems<UserDocument>("document").then((items) => {
@@ -69,11 +69,56 @@ export default function DocumentsPage() {
     if (openId === id) setOpenId(null);
   };
 
-  function summarize(doc: UserDocument) {
-    const prompt = doc.text
-      ? "Fasse die angehängte Datei zusammen und nenne die wichtigsten Punkte."
-      : `Ich habe die Datei „${doc.name}" hochgeladen. Sag mir, was du damit tun kannst.`;
-    router.push(`/chat?agent=emp-marcus&doc=${encodeURIComponent(doc.id)}&prompt=${encodeURIComponent(prompt)}`);
+  function patchDoc(id: string, patch: Partial<UserDocument>) {
+    setDocs((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+  }
+
+  /** Run the real AI analysis and store it on the document. */
+  async function analyze(doc: UserDocument) {
+    if (!doc.text || analyzingId) return;
+    tapHaptic();
+    setAnalyzingId(doc.id);
+    try {
+      const res = await fetch("/api/documents/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: doc.text, name: doc.name }),
+      });
+      const json = await res.json();
+      if (res.ok && json.summary) {
+        const analysis: DocAnalysis = {
+          summary: json.summary,
+          keyFacts: Array.isArray(json.keyFacts) ? json.keyFacts : [],
+          tags: Array.isArray(json.tags) ? json.tags : [],
+          category: json.category ?? "Allgemein",
+          at: new Date().toISOString(),
+        };
+        patchDoc(doc.id, { analysis });
+        setOpenId(doc.id);
+      } else {
+        patchDoc(doc.id, {
+          analysis: {
+            summary: json.error ?? "Analyse fehlgeschlagen.",
+            keyFacts: [], tags: [], category: "Fehler", at: new Date().toISOString(),
+          },
+        });
+      }
+    } finally {
+      setAnalyzingId(null);
+    }
+  }
+
+  async function askQuestion(id: string, text: string, question: string) {
+    const res = await fetch("/api/documents/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, question }),
+    });
+    const json = await res.json();
+    const answer = res.ok ? json.answer ?? "—" : json.error ?? "Fehler bei der Antwort.";
+    setDocs((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, qa: [...(d.qa ?? []), { q: question, a: answer }] } : d)),
+    );
   }
 
   const q = query.trim().toLowerCase();
@@ -83,7 +128,7 @@ export default function DocumentsPage() {
     <PageShell>
       <PageHeader
         title="Dokumente"
-        description="Lade Dateien hoch – Text-, PDF- und Word-Dateien liest deine KI direkt aus und fasst sie zusammen."
+        description="Lade Dateien hoch – Text-, PDF- und Word-Dateien liest die KI aus, fasst sie zusammen, zieht die wichtigsten Fakten und beantwortet deine Fragen dazu."
       >
         <Button variant="accent" size="sm" onClick={() => fileInputRef.current?.click()}>
           <Upload className="h-4 w-4" /> Hochladen
@@ -174,7 +219,31 @@ export default function DocumentsPage() {
                         {kindLabel[doc.kind]} · {formatBytes(doc.sizeKb * 1024)} · {formatRelativeTime(doc.createdAt)}
                       </p>
 
-                      {doc.text ? (
+                      {doc.analysis ? (
+                        <div className="mt-2.5 space-y-2.5">
+                          <div className="flex gap-2 rounded-xl bg-accent/8 p-2.5 ring-1 ring-accent/15">
+                            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                            <p className="text-[13px] leading-relaxed text-ink-soft">{doc.analysis.summary}</p>
+                          </div>
+                          {doc.analysis.keyFacts.length > 0 && (
+                            <ul className="space-y-1">
+                              {doc.analysis.keyFacts.map((f, i) => (
+                                <li key={i} className="flex gap-1.5 text-[13px] text-ink-soft">
+                                  <ListChecks className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" />
+                                  <span>{f}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {doc.analysis.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {doc.analysis.tags.map((t) => (
+                                <span key={t} className="rounded-full bg-surface-soft px-2 py-0.5 text-[11px] text-muted">#{t}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : doc.text ? (
                         <p className="mt-2.5 line-clamp-2 rounded-xl bg-surface-soft/50 p-2.5 text-[13px] leading-relaxed text-ink-soft">
                           {doc.text.slice(0, 180) || "(leer)"}
                         </p>
@@ -186,20 +255,17 @@ export default function DocumentsPage() {
                         </p>
                       )}
 
-                      {open && doc.text && (
-                        <pre className="mt-2 max-h-64 overflow-auto rounded-xl border border-border bg-surface p-3 text-[12px] leading-relaxed text-ink-soft whitespace-pre-wrap break-words">
-                          {doc.text}
-                        </pre>
-                      )}
-
                       <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                        <Button variant="accent" size="sm" onClick={() => summarize(doc)}>
-                          <Sparkles className="h-3.5 w-3.5" /> Mit KI zusammenfassen
-                        </Button>
+                        {doc.text && (
+                          <Button variant="accent" size="sm" onClick={() => analyze(doc)} disabled={analyzingId === doc.id}>
+                            {analyzingId === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                            {analyzingId === doc.id ? "Analysiert …" : doc.analysis ? "Neu analysieren" : "KI-Analyse"}
+                          </Button>
+                        )}
                         {doc.text && (
                           <Button variant="outline" size="sm" onClick={() => setOpenId(open ? null : doc.id)}>
                             {open ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                            {open ? "Verbergen" : "Ansehen"}
+                            {open ? "Schließen" : "Fragen & Text"}
                           </Button>
                         )}
                         <button
@@ -210,6 +276,20 @@ export default function DocumentsPage() {
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
+
+                      {open && doc.text && (
+                        <div className="mt-3 space-y-3 border-t border-border pt-3">
+                          <QaBox doc={doc} onAsk={(question) => askQuestion(doc.id, doc.text as string, question)} />
+                          <details className="group">
+                            <summary className="cursor-pointer list-none text-xs font-medium text-muted hover:text-ink">
+                              Volltext anzeigen
+                            </summary>
+                            <pre className="mt-2 max-h-64 overflow-auto rounded-xl border border-border bg-surface p-3 text-[12px] leading-relaxed text-ink-soft whitespace-pre-wrap break-words">
+                              {doc.text}
+                            </pre>
+                          </details>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -232,6 +312,56 @@ export default function DocumentsPage() {
         ))}
       </div>
     </PageShell>
+  );
+}
+
+/** Ask free-form questions about a single document; answers come from its text. */
+function QaBox({ doc, onAsk }: { doc: UserDocument; onAsk: (q: string) => Promise<void> }) {
+  const [q, setQ] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+
+  async function submit() {
+    const question = q.trim();
+    if (!question || busy) return;
+    tapHaptic();
+    setBusy(true);
+    setQ("");
+    try {
+      await onAsk(question);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {(doc.qa ?? []).map((item, i) => (
+        <div key={i} className="rounded-xl bg-surface-soft/50 p-2.5">
+          <p className="flex gap-1.5 text-[13px] font-medium text-ink">
+            <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+            {item.q}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-soft">{item.a}</p>
+        </div>
+      ))}
+      {busy && (
+        <p className="flex items-center gap-1.5 px-1 text-[13px] text-muted">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Liest das Dokument …
+        </p>
+      )}
+      <div className="flex items-center gap-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") void submit(); }}
+          placeholder="Frage zum Dokument stellen…"
+          className="h-10 flex-1 rounded-full border border-border bg-surface-soft/60 px-3.5 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none"
+        />
+        <Button variant="accent" size="sm" onClick={submit} disabled={busy || !q.trim()}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </Button>
+      </div>
+    </div>
   );
 }
 
