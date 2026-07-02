@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Plus, CalendarDays } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { EventDialog } from "@/components/app/event-dialog";
+import { PushToggle } from "@/components/app/push-toggle";
 import {
   WEEKDAYS, monthLabel, monthGrid, toISODate, todayISO, eventsForDay, minutesOf,
   formatDayLong, colorClasses, type CalendarEvent,
@@ -79,6 +80,7 @@ export default function CalendarPage() {
         title="Kalender"
         description="Trage Termine ein – ganztägig oder mit Uhrzeit. Alles wird gespeichert und dient deinen KI-Mitarbeitern später als Grundlage für die Tagesplanung."
       >
+        <PushToggle />
         <Button variant="accent" size="sm" onClick={() => openNew(selected)}>
           <Plus className="h-4 w-4" /> Neuer Termin
         </Button>
