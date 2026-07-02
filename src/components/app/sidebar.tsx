@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Sparkles, X, ChevronsUpDown, Plus } from "lucide-react";
 import { navGroups } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -120,6 +120,13 @@ export function Sidebar() {
   );
 }
 
+/**
+ * Mobile slide-in menu. Deliberately CSS-only (no AnimatePresence, no
+ * backdrop-filter): both layers stay mounted and become `pointer-events-none`
+ * when closed. This guarantees the backdrop can never linger as an invisible
+ * tap-blocker after navigating from inside the menu — a real bug on iOS Safari,
+ * where an exiting fixed/blurred overlay could stay hit-testable.
+ */
 export function MobileSidebar({
   open,
   onClose,
@@ -128,34 +135,31 @@ export function MobileSidebar({
   onClose: () => void;
 }) {
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.aside
-            className="fixed inset-y-0 left-0 z-50 w-[280px] border-r border-border bg-surface lg:hidden"
-            initial={{ x: -300 }}
-            animate={{ x: 0 }}
-            exit={{ x: -300 }}
-            transition={{ type: "spring", stiffness: 360, damping: 36 }}
-          >
-            <button
-              onClick={onClose}
-              className="absolute right-3 top-5 grid h-9 w-9 place-items-center rounded-full text-muted hover:bg-surface-soft hover:text-ink"
-              aria-label="Menü schließen"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <SidebarInner onNavigate={onClose} />
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
+    <div className="lg:hidden" aria-hidden={!open}>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 [transition-timing-function:var(--ease-lux)]",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      />
+      {/* Panel */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-[280px] border-r border-border bg-surface transition-transform duration-300 [transition-timing-function:var(--ease-lux)]",
+          open ? "translate-x-0" : "pointer-events-none -translate-x-full",
+        )}
+      >
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-5 grid h-9 w-9 place-items-center rounded-full text-muted hover:bg-surface-soft hover:text-ink"
+          aria-label="Menü schließen"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <SidebarInner onNavigate={onClose} />
+      </aside>
+    </div>
   );
 }
