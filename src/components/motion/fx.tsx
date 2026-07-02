@@ -20,6 +20,25 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/**
+ * True only on devices with a real mouse (fine pointer + hover). Touch devices
+ * (phones) get plain, fully-tappable elements — no 3D tilt / cursor effects,
+ * which on iOS Safari can make buttons under a transformed, clipped surface
+ * untappable. Starts false so SSR + the first client render match, then upgrades.
+ */
+function useFinePointer(): boolean {
+  const [fine, setFine] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setFine(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  return fine;
+}
+
 /* ── Page transition ──────────────────────────────────────────────────────
  * Re-mounts on every route change (keyed on pathname) so the new page fades +
  * rises + sharpens into view. Clean, fast, and works with the App Router. */
@@ -56,6 +75,7 @@ export function SpotlightCard({
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
+  const fine = useFinePointer();
 
   const rxv = useMotionValue(0);
   const ryv = useMotionValue(0);
@@ -65,7 +85,7 @@ export function SpotlightCard({
   const gy = useMotionValue(50);
   const glare = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.22), transparent 45%)`;
 
-  const active = tilt && !reduce;
+  const active = tilt && !reduce && fine;
 
   function onMove(e: React.MouseEvent<HTMLDivElement>) {
     const el = ref.current;
@@ -113,23 +133,24 @@ export function SpotlightCard({
  * glow on dark. */
 export function CursorGlow() {
   const reduce = useReducedMotion();
+  const fine = useFinePointer();
   const x = useMotionValue(-1000);
   const y = useMotionValue(-1000);
   const sx = useSpring(x, { stiffness: 120, damping: 20, mass: 0.5 });
   const sy = useSpring(y, { stiffness: 120, damping: 20, mass: 0.5 });
 
   React.useEffect(() => {
-    if (reduce) return;
-    if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) return;
+    if (reduce || !fine) return;
     const move = (e: MouseEvent) => {
       x.set(e.clientX);
       y.set(e.clientY);
     };
     window.addEventListener("mousemove", move);
     return () => window.removeEventListener("mousemove", move);
-  }, [reduce, x, y]);
+  }, [reduce, fine, x, y]);
 
-  if (reduce) return null;
+  // Touch devices: render nothing at all (no fixed overlay above content).
+  if (reduce || !fine) return null;
 
   return (
     <motion.div
