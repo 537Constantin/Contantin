@@ -6,7 +6,7 @@ import { Topbar } from "@/components/app/topbar";
 import { BottomNav } from "@/components/app/bottom-nav";
 import { NativeInit } from "@/components/app/native-init";
 import { StoreCacheGuard } from "@/components/app/store-cache-guard";
-import { PageTransition, CursorGlow, ScrollProgress } from "@/components/motion/fx";
+import { CursorGlow, ScrollProgress } from "@/components/motion/fx";
 import { clerkEnabled } from "@/lib/auth";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Topbar onMenu={() => setMobileOpen(true)} />
         {/* Extra bottom space on mobile so content clears the tab bar + home indicator. */}
         <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)_+_4.5rem)] lg:pb-0">
-          <PageTransition>{children}</PageTransition>
+          {children}
         </main>
       </div>
 
