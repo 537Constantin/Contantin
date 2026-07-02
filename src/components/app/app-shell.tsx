@@ -34,10 +34,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)_+_4.5rem)] lg:pb-0">
           {children}
         </main>
+        {/* App-native bottom tab bar (phones / iPad portrait). Kept inside this
+            z-10 layer so page dialogs (z-50) render above it, not under it. */}
+        <BottomNav onMenu={() => setMobileOpen(true)} />
       </div>
-
-      {/* App-native bottom tab bar (phones / iPad portrait) */}
-      <BottomNav onMenu={() => setMobileOpen(true)} />
     </div>
   );
 }
