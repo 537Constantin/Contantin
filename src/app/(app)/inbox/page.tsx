@@ -300,7 +300,7 @@ function ConnectForm({ onConnected }: { onConnected: () => void }) {
       const res = await fetch("/api/inbox/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ host, port, secure: true, email, password }),
+        body: JSON.stringify({ host, port, email, password }),
       });
       const j = await res.json();
       if (j.ok) onConnected();
