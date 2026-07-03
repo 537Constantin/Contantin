@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ImapFlow } from "imapflow";
-import { resolveScope, getMailboxWithPassword } from "@/lib/mailbox";
+import { resolveScope, getImapConnection } from "@/lib/mailbox";
 import type { InboxMessage } from "@/lib/inbox";
 
 export const runtime = "nodejs";
@@ -11,14 +11,15 @@ export async function GET(req: NextRequest) {
   const scope = await resolveScope();
   if (!scope) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
 
-  const cfg = await getMailboxWithPassword(scope);
+  const cfg = await getImapConnection(scope);
   if (!cfg) return NextResponse.json({ error: "not-connected" }, { status: 400 });
 
   const limit = Math.min(40, Math.max(5, Number(req.nextUrl.searchParams.get("limit")) || 20));
 
   const client = new ImapFlow({
     host: cfg.host, port: cfg.port, secure: cfg.secure,
-    auth: { user: cfg.email, pass: cfg.password }, logger: false,
+    auth: cfg.accessToken ? { user: cfg.email, accessToken: cfg.accessToken } : { user: cfg.email, pass: cfg.pass! },
+    logger: false, connectionTimeout: 15000, greetingTimeout: 15000,
   });
 
   try {

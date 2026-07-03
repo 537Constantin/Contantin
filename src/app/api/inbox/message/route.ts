@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
-import { resolveScope, getMailboxWithPassword } from "@/lib/mailbox";
+import { resolveScope, getImapConnection } from "@/lib/mailbox";
 import type { FullMessage } from "@/lib/inbox";
 
 export const runtime = "nodejs";
@@ -17,12 +17,13 @@ export async function GET(req: NextRequest) {
   const uid = Number(req.nextUrl.searchParams.get("uid"));
   if (!uid) return NextResponse.json({ error: "Keine Nachricht angegeben." }, { status: 400 });
 
-  const cfg = await getMailboxWithPassword(scope);
+  const cfg = await getImapConnection(scope);
   if (!cfg) return NextResponse.json({ error: "not-connected" }, { status: 400 });
 
   const client = new ImapFlow({
     host: cfg.host, port: cfg.port, secure: cfg.secure,
-    auth: { user: cfg.email, pass: cfg.password }, logger: false,
+    auth: cfg.accessToken ? { user: cfg.email, accessToken: cfg.accessToken } : { user: cfg.email, pass: cfg.pass! },
+    logger: false, connectionTimeout: 15000, greetingTimeout: 15000,
   });
 
   try {
