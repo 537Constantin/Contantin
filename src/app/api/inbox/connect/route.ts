@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
 
   const host = (body.host ?? "").trim();
   const port = Number(body.port) || 993;
-  const secure = body.secure !== false;
+  // Port 993 = implicit TLS, port 143 = STARTTLS (secure:false lets ImapFlow
+  // upgrade). Derive from the port unless the caller explicitly overrides it.
+  const secure = typeof body.secure === "boolean" ? body.secure : port !== 143;
   const email = (body.email ?? "").trim();
   const password = body.password ?? "";
 
@@ -39,19 +41,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Bitte Server, E-Mail-Adresse und App-Passwort angeben." }, { status: 400 });
   }
 
-  // Test the login before saving anything.
-  const client = new ImapFlow({ host, port, secure, auth: { user: email, pass: password }, logger: false });
+  // Test the login before saving anything. Only connect() proves the
+  // credentials work — logout() is best-effort and must never fail the check.
+  const client = new ImapFlow({
+    host, port, secure,
+    auth: { user: email, pass: password },
+    logger: false,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    // Some servers reject the ID command; disabling it avoids a hard failure.
+    clientInfo: { name: "SmartStaff", version: "1.0" },
+  });
   try {
     await client.connect();
-    await client.logout();
   } catch (err) {
     try { await client.close(); } catch { /* ignore */ }
-    const msg = (err as Error)?.message ?? "";
-    const friendly = /auth|login|credential|password/i.test(msg)
-      ? "Login fehlgeschlagen – prüfe E-Mail-Adresse und App-Passwort (nicht das normale Passwort)."
-      : `Verbindung zum Server fehlgeschlagen: ${msg.slice(0, 140)}`;
+    const e = err as { message?: string; code?: string; responseText?: string };
+    const raw = [e?.responseText, e?.message, e?.code].filter(Boolean).join(" ").trim();
+    const friendly = /auth|login|credential|password|invalid|denied/i.test(raw)
+      ? "Login fehlgeschlagen – prüfe E-Mail-Adresse und App-Passwort (nicht das normale Passwort). Bei Gmail/GMX/Web.de muss IMAP im Postfach aktiviert und ein App-Passwort verwendet werden."
+      : `Verbindung zum Server fehlgeschlagen (${host}:${port}). Details: ${raw.slice(0, 200) || "keine Meldung"}`;
     return NextResponse.json({ ok: false, error: friendly }, { status: 400 });
   }
+  // Auth succeeded — tidy up the test connection without letting it throw.
+  try { await client.logout(); } catch { try { await client.close(); } catch { /* ignore */ } }
 
   const saved = await saveMailbox(scope, { host, port, secure, email, password });
   if (!saved) return NextResponse.json({ ok: false, error: "Konnte die Verbindung nicht speichern." }, { status: 500 });
