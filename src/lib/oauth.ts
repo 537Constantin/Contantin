@@ -36,13 +36,14 @@ export function googleAuthUrl(redirectUri: string, state: string): string {
 }
 
 /** Decode the email claim out of an id_token JWT (no verification needed — it
- * came straight from Google's token endpoint over TLS). */
+ * came straight from the provider's token endpoint over TLS). Microsoft work
+ * accounts carry the address in preferred_username / upn rather than email. */
 function emailFromIdToken(idToken: string): string {
   try {
     const payload = idToken.split(".")[1];
     const json = Buffer.from(payload.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
-    const claims = JSON.parse(json) as { email?: string };
-    return (claims.email ?? "").trim();
+    const c = JSON.parse(json) as { email?: string; preferred_username?: string; upn?: string };
+    return (c.email || c.preferred_username || c.upn || "").trim();
   } catch {
     return "";
   }
@@ -91,6 +92,83 @@ export async function googleRefreshAccessToken(refreshToken: string): Promise<st
       client_id: process.env.GOOGLE_OAUTH_CLIENT_ID ?? "",
       client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? "",
       grant_type: "refresh_token",
+    }),
+  }).catch(() => null);
+
+  if (!res || !res.ok) return null;
+  const j = (await res.json().catch(() => null)) as { access_token?: string } | null;
+  return j?.access_token ?? null;
+}
+
+// ── Microsoft (Outlook / Microsoft 365) ────────────────────────────────────
+// The "common" tenant lets both personal (outlook.com/hotmail) and work/school
+// (Microsoft 365) accounts sign in. IMAP.AccessAsUser.All + offline_access give
+// us IMAP access with a refresh token; ImapFlow connects via XOAUTH2.
+const MS_TENANT = process.env.MICROSOFT_OAUTH_TENANT || "common";
+const MS_AUTH_URL = `https://login.microsoftonline.com/${MS_TENANT}/oauth2/v2.0/authorize`;
+const MS_TOKEN_URL = `https://login.microsoftonline.com/${MS_TENANT}/oauth2/v2.0/token`;
+const MS_SCOPE = "openid email profile offline_access https://outlook.office.com/IMAP.AccessAsUser.All";
+// Refresh must not include openid/offline_access — only the resource scope.
+const MS_REFRESH_SCOPE = "https://outlook.office.com/IMAP.AccessAsUser.All";
+
+export function microsoftConfigured(): boolean {
+  return Boolean(process.env.MICROSOFT_OAUTH_CLIENT_ID && process.env.MICROSOFT_OAUTH_CLIENT_SECRET);
+}
+
+export function microsoftCallbackUrl(origin: string): string {
+  return `${origin.replace(/\/$/, "")}/api/inbox/oauth/microsoft/callback`;
+}
+
+export function microsoftAuthUrl(redirectUri: string, state: string): string {
+  const params = new URLSearchParams({
+    client_id: process.env.MICROSOFT_OAUTH_CLIENT_ID ?? "",
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: MS_SCOPE,
+    response_mode: "query",
+    prompt: "select_account",
+    state,
+  });
+  return `${MS_AUTH_URL}?${params.toString()}`;
+}
+
+export async function microsoftExchangeCode(code: string, redirectUri: string): Promise<GoogleTokens | null> {
+  const res = await fetch(MS_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: process.env.MICROSOFT_OAUTH_CLIENT_ID ?? "",
+      client_secret: process.env.MICROSOFT_OAUTH_CLIENT_SECRET ?? "",
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code",
+      scope: MS_SCOPE,
+    }),
+  }).catch(() => null);
+
+  if (!res || !res.ok) return null;
+  const j = (await res.json().catch(() => null)) as
+    | { access_token?: string; refresh_token?: string; id_token?: string }
+    | null;
+  if (!j?.access_token || !j.refresh_token) return null;
+
+  return {
+    refreshToken: j.refresh_token,
+    accessToken: j.access_token,
+    email: j.id_token ? emailFromIdToken(j.id_token) : "",
+  };
+}
+
+export async function microsoftRefreshAccessToken(refreshToken: string): Promise<string | null> {
+  const res = await fetch(MS_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      refresh_token: refreshToken,
+      client_id: process.env.MICROSOFT_OAUTH_CLIENT_ID ?? "",
+      client_secret: process.env.MICROSOFT_OAUTH_CLIENT_SECRET ?? "",
+      grant_type: "refresh_token",
+      scope: MS_REFRESH_SCOPE,
     }),
   }).catch(() => null);
 
