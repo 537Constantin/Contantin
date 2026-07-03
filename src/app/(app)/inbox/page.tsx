@@ -376,7 +376,17 @@ function ConnectForm({
             </button>
           ))}
         </div>
-        <p className="rounded-lg bg-surface-soft/50 px-3 py-2 text-xs text-muted">{provider.hint}</p>
+        <div className="rounded-xl border border-border bg-surface-soft/40 p-3.5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">So verbindest du {provider.label}</p>
+          <ol className="space-y-1.5">
+            {provider.steps.map((s, i) => (
+              <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed text-ink-soft">
+                <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">{i + 1}</span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="block sm:col-span-2"><span className="mb-1.5 block text-xs font-medium text-ink">IMAP-Server</span>
@@ -389,13 +399,13 @@ function ConnectForm({
         <label className="block"><span className="mb-1.5 block text-xs font-medium text-ink">E-Mail-Adresse</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@firma.de" className={inputCls} />
         </label>
-        <label className="block"><span className="mb-1.5 block text-xs font-medium text-ink">App-Passwort</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="App-spezifisches Passwort" className={inputCls} />
+        <label className="block"><span className="mb-1.5 block text-xs font-medium text-ink">{provider.passwordLabel}</span>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={provider.passwordLabel} className={inputCls} />
         </label>
 
         <p className="flex items-start gap-1.5 text-xs text-muted">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Nutze ein <span className="font-medium text-ink">App-Passwort</span> (nicht dein normales) – das kannst du jederzeit widerrufen. Es wird verschlüsselt gespeichert.
+          Dein Passwort wird <span className="font-medium text-ink">verschlüsselt</span> gespeichert und nur zum Abrufen deiner E-Mails genutzt.
         </p>
 
         {error && <p className="rounded-lg bg-warning/10 px-3 py-2 text-sm text-warning">{error}</p>}
