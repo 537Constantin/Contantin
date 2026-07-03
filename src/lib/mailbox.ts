@@ -11,7 +11,7 @@ import { Prisma } from "@prisma/client";
 import { db, dbEnabled } from "@/lib/db";
 import { clerkEnabled } from "@/lib/auth";
 import { encrypt, decrypt, type Encrypted } from "@/lib/mail-crypto";
-import { googleRefreshAccessToken } from "@/lib/oauth";
+import { googleRefreshAccessToken, microsoftRefreshAccessToken } from "@/lib/oauth";
 
 const KIND = "mailbox";
 
@@ -140,7 +140,10 @@ export async function getImapConnection(scope: string): Promise<ImapConnection |
     if (!d.refreshToken) return null;
     const refresh = decrypt(d.refreshToken);
     if (refresh === null) return null;
-    const accessToken = await googleRefreshAccessToken(refresh);
+    const accessToken =
+      d.provider === "microsoft"
+        ? await microsoftRefreshAccessToken(refresh)
+        : await googleRefreshAccessToken(refresh);
     if (!accessToken) return null;
     return { host: d.host, port: d.port, secure: d.secure, email: d.email, accessToken };
   }
