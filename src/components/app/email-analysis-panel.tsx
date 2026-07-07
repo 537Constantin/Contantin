@@ -16,6 +16,72 @@ export interface CalendarDraft {
   notes?: string;
 }
 
+const fieldCls =
+  "h-9 w-full rounded-lg border border-border bg-surface-soft/50 px-2.5 text-[13px] text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none";
+
+/**
+ * A single "In Kalender" action: opens a small confirm/edit field (title, date,
+ * time) prefilled from the AI draft, so the user can adjust before it's saved.
+ */
+function CalendarAction({
+  draft,
+  onAdd,
+}: {
+  draft: CalendarDraft;
+  onAdd: (draft: CalendarDraft) => Promise<boolean>;
+}) {
+  const [phase, setPhase] = React.useState<"idle" | "editing" | "saving" | "done">("idle");
+  const [title, setTitle] = React.useState(draft.title);
+  const [date, setDate] = React.useState(draft.date);
+  const [time, setTime] = React.useState(draft.time ?? "");
+
+  if (phase === "done") {
+    return (
+      <Button variant="ghost" size="sm" className="mt-1.5" disabled>
+        <Check className="h-3.5 w-3.5" /> Im Kalender
+      </Button>
+    );
+  }
+
+  if (phase === "idle") {
+    return (
+      <Button variant="outline" size="sm" className="mt-1.5" onClick={() => setPhase("editing")}>
+        <CalendarPlus className="h-3.5 w-3.5" /> In Kalender
+      </Button>
+    );
+  }
+
+  async function confirm() {
+    if (!date || phase === "saving") return;
+    setPhase("saving");
+    const ok = await onAdd({ title: title.trim() || "Termin aus E-Mail", date, time: time || undefined, notes: draft.notes });
+    setPhase(ok ? "done" : "editing");
+  }
+
+  return (
+    <div className="mt-2 space-y-2 rounded-lg border border-border bg-surface p-2.5">
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titel" className={fieldCls} />
+      <div className="flex gap-2">
+        <label className="flex-1">
+          <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted">Datum</span>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={fieldCls} />
+        </label>
+        <label className="flex-1">
+          <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted">Uhrzeit</span>
+          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={fieldCls} />
+        </label>
+      </div>
+      <p className="text-[11px] text-muted">Uhrzeit leer lassen = ganztägig.</p>
+      <div className="flex gap-2">
+        <Button variant="accent" size="sm" onClick={confirm} disabled={!date || phase === "saving"}>
+          {phase === "saving" ? "Speichert …" : "Hinzufügen"}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setPhase("idle")}>Abbrechen</Button>
+      </div>
+    </div>
+  );
+}
+
 /** Renders the AI analysis of an email + one-click reply / calendar actions. */
 export function EmailAnalysisPanel({
   analysis,
@@ -29,33 +95,6 @@ export function EmailAnalysisPanel({
   sourceSubject?: string;
 }) {
   const prio = PRIORITY_META[analysis.priority];
-  const [added, setAdded] = React.useState<Record<string, boolean>>({});
-  const [busy, setBusy] = React.useState<string | null>(null);
-
-  async function add(key: string, draft: CalendarDraft) {
-    if (!onAddToCalendar || added[key] || busy) return;
-    setBusy(key);
-    const ok = await onAddToCalendar(draft);
-    setBusy(null);
-    if (ok) setAdded((a) => ({ ...a, [key]: true }));
-  }
-
-  function CalButton({ k, draft }: { k: string; draft: CalendarDraft }) {
-    if (!onAddToCalendar) return null;
-    const done = added[k];
-    return (
-      <Button
-        variant={done ? "ghost" : "outline"}
-        size="sm"
-        className="mt-1.5"
-        onClick={() => add(k, draft)}
-        disabled={done || busy === k}
-      >
-        {done ? <><Check className="h-3.5 w-3.5" /> Im Kalender</> : <><CalendarPlus className="h-3.5 w-3.5" /> In Kalender</>}
-      </Button>
-    );
-  }
-
   const replies: { key: keyof EmailAnalysis["replySuggestions"]; label: string }[] = [
     { key: "professional", label: "Professionell" },
     { key: "friendly", label: "Freundlich" },
@@ -91,18 +130,20 @@ export function EmailAnalysisPanel({
                 <span className="font-medium text-ink">{t.task}</span>
                 {t.deadline && <span className="text-muted"> · bis {t.deadline}</span>}
                 {t.person && <span className="text-muted"> · {t.person}</span>}
-                <div>
-                  <CalButton
-                    k={`task-${i}`}
-                    draft={{
-                      title: t.task || "Aufgabe aus E-Mail",
-                      date: parseLooseDate(t.deadline) ?? todayISO(),
-                      notes: [t.deadline && `Frist: ${t.deadline}`, t.person && `Kontakt: ${t.person}`, fromMail]
-                        .filter(Boolean)
-                        .join("\n"),
-                    }}
-                  />
-                </div>
+                {onAddToCalendar && (
+                  <div>
+                    <CalendarAction
+                      onAdd={onAddToCalendar}
+                      draft={{
+                        title: t.task || "Aufgabe aus E-Mail",
+                        date: parseLooseDate(t.deadline) ?? todayISO(),
+                        notes: [t.deadline && `Frist: ${t.deadline}`, t.person && `Kontakt: ${t.person}`, fromMail]
+                          .filter(Boolean)
+                          .join("\n"),
+                      }}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -119,17 +160,19 @@ export function EmailAnalysisPanel({
               <li key={i} className="rounded-lg bg-surface/60 px-2.5 py-1.5 text-[13px] text-ink-soft">
                 <span className="font-medium text-ink">{[d.date, d.time].filter(Boolean).join(" ")}</span>
                 {d.description && <span className="text-muted"> · {d.description}</span>}
-                <div>
-                  <CalButton
-                    k={`date-${i}`}
-                    draft={{
-                      title: d.description?.trim() || (sourceSubject ? `Termin: ${sourceSubject}` : "Termin aus E-Mail"),
-                      date: parseLooseDate(d.date) ?? todayISO(),
-                      time: cleanTime(d.time),
-                      notes: fromMail,
-                    }}
-                  />
-                </div>
+                {onAddToCalendar && (
+                  <div>
+                    <CalendarAction
+                      onAdd={onAddToCalendar}
+                      draft={{
+                        title: d.description?.trim() || (sourceSubject ? `Termin: ${sourceSubject}` : "Termin aus E-Mail"),
+                        date: parseLooseDate(d.date) ?? todayISO(),
+                        time: cleanTime(d.time),
+                        notes: fromMail,
+                      }}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
