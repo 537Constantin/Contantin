@@ -154,6 +154,49 @@ export async function getImapConnection(scope: string): Promise<ImapConnection |
   return { host: d.host, port: d.port, secure: d.secure, email: d.email, pass };
 }
 
+/** IMAP host → SMTP host/port for the providers we know; sensible fallback. */
+function smtpFor(provider: string, imapHost: string): { host: string; port: number; secure: boolean } {
+  if (provider === "google") return { host: "smtp.gmail.com", port: 465, secure: true };
+  if (provider === "microsoft") return { host: "smtp.office365.com", port: 587, secure: false };
+  const map: Record<string, { host: string; port: number; secure: boolean }> = {
+    "imap.gmx.net": { host: "mail.gmx.net", port: 587, secure: false },
+    "imap.web.de": { host: "smtp.web.de", port: 587, secure: false },
+    "imap.ionos.de": { host: "smtp.ionos.de", port: 587, secure: false },
+    "imap.gmail.com": { host: "smtp.gmail.com", port: 465, secure: true },
+    "outlook.office365.com": { host: "smtp.office365.com", port: 587, secure: false },
+  };
+  if (map[imapHost]) return map[imapHost];
+  // Fallback: many hosts mirror imap.* as smtp.* on the STARTTLS submission port.
+  return { host: imapHost.replace(/^imap\./, "smtp."), port: 587, secure: false };
+}
+
+/**
+ * SMTP settings for sending as the connected user — server-only. Refreshes the
+ * OAuth access token for OAuth mailboxes, exactly like getImapConnection.
+ */
+export async function getSmtpConnection(scope: string): Promise<ImapConnection | null> {
+  const d = await readStored(scope);
+  if (!d) return null;
+  const smtp = smtpFor(d.provider ?? "imap", d.host);
+
+  if ((d.authType ?? "password") === "oauth") {
+    if (!d.refreshToken) return null;
+    const refresh = decrypt(d.refreshToken);
+    if (refresh === null) return null;
+    const accessToken =
+      d.provider === "microsoft"
+        ? await microsoftRefreshAccessToken(refresh)
+        : await googleRefreshAccessToken(refresh);
+    if (!accessToken) return null;
+    return { host: smtp.host, port: smtp.port, secure: smtp.secure, email: d.email, accessToken };
+  }
+
+  if (!d.cred) return null;
+  const pass = decrypt(d.cred);
+  if (pass === null) return null;
+  return { host: smtp.host, port: smtp.port, secure: smtp.secure, email: d.email, pass };
+}
+
 export async function deleteMailbox(scope: string): Promise<void> {
   if (!dbEnabled || !db) return;
   await db.storeItem.deleteMany({ where: { id: rowId(scope) } });
