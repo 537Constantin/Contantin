@@ -75,6 +75,41 @@ export function monthGrid(year: number, month: number): Date[][] {
   return weeks;
 }
 
+/**
+ * Best-effort parse of a free-text date into an ISO day ("YYYY-MM-DD").
+ * Handles the formats the AI email analysis tends to return: ISO, DD.MM.YYYY,
+ * DD.MM.YY and DD.MM. (current year). Returns null when nothing usable is found.
+ */
+export function parseLooseDate(input: string): string | null {
+  const s = (input || "").trim();
+  if (!s) return null;
+
+  const iso = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  const de = s.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/);
+  if (de) {
+    const day = Number(de[1]);
+    const month = Number(de[2]);
+    let year = de[3] ? Number(de[3]) : new Date().getFullYear();
+    if (de[3] && de[3].length === 2) year = 2000 + year;
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+  }
+  return null;
+}
+
+/** Keep only a clean "HH:MM" time; return undefined for anything else. */
+export function cleanTime(input?: string): string | undefined {
+  const m = (input || "").trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return undefined;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return undefined;
+  return `${String(h).padStart(2, "0")}:${m[2]}`;
+}
+
 export function minutesOf(time?: string): number {
   if (!time) return 0;
   const [h, m] = time.split(":").map(Number);
