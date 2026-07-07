@@ -36,6 +36,9 @@ export default function InboxPage() {
   const [reply, setReply] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [sendMsg, setSendMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
+  const [limit, setLimit] = React.useState(25);
+  // Cache analyses per message uid so re-opening is instant and doesn't re-bill.
+  const analysisCache = React.useRef<Record<number, EmailAnalysis>>({});
 
   const loadStatus = React.useCallback(async () => {
     try {
@@ -46,7 +49,7 @@ export default function InboxPage() {
       if (j.connected) {
         setAccount(j.email ?? "");
         setPhase("ready");
-        void loadMessages();
+        void loadMessages(25);
       } else setPhase(j.ready ? "connect" : "notready");
     } catch {
       setPhase("notready");
@@ -66,11 +69,11 @@ export default function InboxPage() {
 
   React.useEffect(() => { void loadStatus(); }, [loadStatus]);
 
-  async function loadMessages() {
+  async function loadMessages(count: number) {
     setListLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/inbox/fetch?limit=25", { cache: "no-store" });
+      const res = await fetch(`/api/inbox/fetch?limit=${count}`, { cache: "no-store" });
       const j = await res.json();
       if (j.error === "not-connected") return setPhase("connect");
       if (!res.ok) setError(j.error ?? "Abruf fehlgeschlagen.");
@@ -80,6 +83,12 @@ export default function InboxPage() {
     } finally {
       setListLoading(false);
     }
+  }
+
+  function loadMore() {
+    const next = limit + 15;
+    setLimit(next);
+    void loadMessages(next);
   }
 
   async function openMessage(uid: number) {
@@ -94,7 +103,10 @@ export default function InboxPage() {
       const res = await fetch(`/api/inbox/message?uid=${uid}`, { cache: "no-store" });
       const j = await res.json();
       if (!res.ok) setError(j.error ?? "Nachricht konnte nicht geladen werden.");
-      else setSelected(j.message);
+      else {
+        setSelected(j.message);
+        setAnalysis(analysisCache.current[uid] ?? null); // restore cached analysis
+      }
     } catch {
       setError("Verbindung fehlgeschlagen.");
     } finally {
@@ -115,7 +127,10 @@ export default function InboxPage() {
       });
       const j = await res.json();
       if (!res.ok || j.error) setError(j.error ?? "Analyse fehlgeschlagen.");
-      else setAnalysis(j);
+      else {
+        setAnalysis(j);
+        analysisCache.current[selected.uid] = j; // remember for this message
+      }
     } catch {
       setError("Verbindung fehlgeschlagen.");
     } finally {
@@ -130,13 +145,18 @@ export default function InboxPage() {
     setSendMsg(null);
     const subject = selected.subject.replace(/^\s*(re:\s*)+/i, "");
     try {
-      const res = await fetch("/api/email/send", {
+      const res = await fetch("/api/inbox/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to: selected.fromAddress, subject: `Re: ${subject}`, text: reply }),
       });
       const j = await res.json();
-      setSendMsg(j?.ok ? { ok: true, text: `Antwort an ${selected.fromAddress} verschickt.` } : { ok: false, text: j?.error ?? "Versand fehlgeschlagen." });
+      if (j?.ok) {
+        setSendMsg({ ok: true, text: `Antwort an ${selected.fromAddress} verschickt – von ${j.from ?? account}.` });
+        setReply("");
+      } else {
+        setSendMsg({ ok: false, text: j?.error === "not-connected" ? "Kein Postfach verbunden." : j?.error ?? "Versand fehlgeschlagen." });
+      }
     } catch {
       setSendMsg({ ok: false, text: "Verbindung fehlgeschlagen." });
     } finally {
@@ -178,7 +198,7 @@ export default function InboxPage() {
       <PageHeader title="Posteingang" description="Verbinde dein Postfach – die KI liest neue E-Mails, fasst sie zusammen, erkennt Aufgaben & Termine und schlägt Antworten vor.">
         {phase === "ready" && (
           <>
-            <Button variant="outline" size="sm" onClick={loadMessages} disabled={listLoading}>
+            <Button variant="outline" size="sm" onClick={() => loadMessages(limit)} disabled={listLoading}>
               {listLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Aktualisieren
             </Button>
             <Button variant="ghost" size="sm" onClick={disconnect}>
@@ -240,6 +260,11 @@ export default function InboxPage() {
                   </div>
                 </button>
               ))}
+              {messages.length >= limit && limit < 40 && (
+                <Button variant="ghost" size="sm" className="w-full" onClick={loadMore} disabled={listLoading}>
+                  {listLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Mehr laden
+                </Button>
+              )}
             </div>
           )}
         </div>
