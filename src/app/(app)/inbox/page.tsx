@@ -8,10 +8,12 @@ import {
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { EmailAnalysisPanel } from "@/components/app/email-analysis-panel";
+import { EmailAnalysisPanel, type CalendarDraft } from "@/components/app/email-analysis-panel";
 import {
   MAIL_PROVIDERS, type InboxMessage, type FullMessage, type EmailAnalysis,
 } from "@/lib/inbox";
+import { loadItems, saveItems } from "@/lib/store-sync";
+import type { CalendarEvent } from "@/lib/calendar";
 import { tapHaptic } from "@/lib/haptics";
 import { formatRelativeTime, cn } from "@/lib/utils";
 
@@ -142,6 +144,27 @@ export default function InboxPage() {
     }
   }
 
+  async function addToCalendar(draft: CalendarDraft): Promise<boolean> {
+    try {
+      const events = await loadItems<CalendarEvent>("event");
+      const ev: CalendarEvent = {
+        id: (crypto.randomUUID?.() ?? String(Date.now())),
+        title: draft.title.slice(0, 120),
+        date: draft.date,
+        allDay: !draft.time,
+        start: draft.time,
+        notes: draft.notes,
+        color: "accent",
+        createdAt: new Date().toISOString(),
+      };
+      await saveItems("event", [...events, ev]);
+      tapHaptic(12);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function disconnect() {
     tapHaptic();
     await fetch("/api/inbox/disconnect", { method: "POST" });
@@ -193,6 +216,7 @@ export default function InboxPage() {
               onSend={sendReply}
               sending={sending}
               sendMsg={sendMsg}
+              onAddToCalendar={addToCalendar}
             />
           ) : opening ? (
             <div className="flex justify-center py-10 text-muted"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -225,7 +249,7 @@ export default function InboxPage() {
 }
 
 function MessageDetail({
-  message, onBack, analysis, analyzing, onAnalyze, reply, setReply, onSend, sending, sendMsg,
+  message, onBack, analysis, analyzing, onAnalyze, reply, setReply, onSend, sending, sendMsg, onAddToCalendar,
 }: {
   message: FullMessage;
   onBack: () => void;
@@ -237,6 +261,7 @@ function MessageDetail({
   onSend: () => void;
   sending: boolean;
   sendMsg: { ok: boolean; text: string } | null;
+  onAddToCalendar: (draft: CalendarDraft) => Promise<boolean>;
 }) {
   return (
     <div className="space-y-4">
@@ -259,7 +284,12 @@ function MessageDetail({
       </Card>
 
       {analysis && (
-        <EmailAnalysisPanel analysis={analysis} onUseReply={(t) => setReply(t)} />
+        <EmailAnalysisPanel
+          analysis={analysis}
+          onUseReply={(t) => setReply(t)}
+          onAddToCalendar={onAddToCalendar}
+          sourceSubject={message.subject}
+        />
       )}
 
       {/* Reply */}
