@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Sparkles, X, ChevronsUpDown, Plus } from "lucide-react";
+import { Sparkles, X, Plus } from "lucide-react";
 import { navGroups } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
       {navGroups.map((group) => (
         <div key={group.label}>
-          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-            {group.label}
-          </p>
+          {group.label && (
+            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+              {group.label}
+            </p>
+          )}
           <ul className="space-y-0.5">
             {group.items.map((item) => {
               const active =
@@ -78,27 +80,9 @@ function Brand() {
   );
 }
 
-function WorkspaceSwitcher() {
-  return (
-    <div className="px-3 pb-3">
-      <button className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface-soft/60 px-3 py-2.5 text-left transition-colors hover:border-accent/30">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-xs font-bold text-canvas">
-          CW
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-ink">Constantin GmbH</span>
-          <span className="block truncate text-xs text-muted">Enterprise · 5 Agenten</span>
-        </span>
-        <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted" />
-      </button>
-    </div>
-  );
-}
-
 const SidebarInner = ({ onNavigate }: { onNavigate?: () => void }) => (
   <div className="flex h-full flex-col">
     <Brand />
-    <WorkspaceSwitcher />
     <NavLinks onNavigate={onNavigate} />
     <div className="border-t border-border p-3">
       <Button asChild variant="accent" size="sm" className="w-full">

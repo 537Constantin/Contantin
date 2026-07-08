@@ -28,31 +28,28 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+// Kept deliberately short: the six things people use daily sit up top without a
+// header, everything advanced is tucked under "Mehr", admin at the bottom.
 export const navGroups: NavGroup[] = [
   {
-    label: "Überblick",
+    label: "",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "KI-Mitarbeiter", href: "/employees", icon: Users },
-    ],
-  },
-  {
-    label: "Betrieb",
-    items: [
+      { label: "Start", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Posteingang", href: "/inbox", icon: Inbox },
       { label: "Kalender", href: "/calendar", icon: CalendarDays },
-      { label: "Workflows", href: "/workflows", icon: Workflow },
-      { label: "KI-E-Mail", href: "/email", icon: Mail, badge: "Live" },
-      { label: "Posteingang", href: "/inbox", icon: Inbox, badge: "Neu" },
-      { label: "Belege", href: "/receipts", icon: ReceiptText, badge: "Neu" },
-      { label: "Spezialisierungen", href: "/specializations", icon: GraduationCap },
+      { label: "KI-Mitarbeiter", href: "/employees", icon: Users },
+      { label: "Belege", href: "/receipts", icon: ReceiptText },
       { label: "Dokumente", href: "/documents", icon: FileText },
-      { label: "Telefon", href: "/calls", icon: Phone },
     ],
   },
   {
-    label: "Intelligenz",
+    label: "Mehr",
     items: [
-      { label: "Analytics & Beratung", href: "/analytics", icon: BarChart3 },
+      { label: "Workflows", href: "/workflows", icon: Workflow },
+      { label: "Spezialisierungen", href: "/specializations", icon: GraduationCap },
+      { label: "Telefon", href: "/calls", icon: Phone },
+      { label: "E-Mail schreiben", href: "/email", icon: Mail },
+      { label: "Analyse", href: "/analytics", icon: BarChart3 },
       { label: "Diagramme", href: "/charts", icon: LineChart },
     ],
   },
