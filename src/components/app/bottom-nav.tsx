@@ -4,15 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { LayoutDashboard, Users, Workflow, BarChart3, Menu, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Inbox, CalendarDays, ReceiptText, Menu, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tapHaptic } from "@/lib/haptics";
 
 const items: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Start", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Team", href: "/employees", icon: Users },
-  { label: "Workflows", href: "/workflows", icon: Workflow },
-  { label: "Analyse", href: "/analytics", icon: BarChart3 },
+  { label: "Posteingang", href: "/inbox", icon: Inbox },
+  { label: "Kalender", href: "/calendar", icon: CalendarDays },
+  { label: "Belege", href: "/receipts", icon: ReceiptText },
 ];
 
 /**
