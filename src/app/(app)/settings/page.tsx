@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { resetConsent } from "@/components/site/cookie-consent";
 import { plans, getPlan, loadCurrentPlanId, isPurchasable, type PlanId } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
@@ -397,6 +398,9 @@ function SecurityTab() {
             <Button asChild variant="outline" size="sm"><a href="/datenschutz">Datenschutz</a></Button>
             <Button asChild variant="outline" size="sm"><a href="/impressum">Impressum</a></Button>
             <Button asChild variant="outline" size="sm"><a href="/agb">AGB</a></Button>
+            <Button variant="outline" size="sm" onClick={() => { resetConsent(); window.location.reload(); }}>
+              Cookie-Einstellungen ändern
+            </Button>
           </div>
           <p className="text-xs text-muted">Hinweis: Zertifizierungen wie SOC 2 oder ISO 27001 bestehen derzeit nicht und werden daher nicht ausgewiesen.</p>
         </CardContent>

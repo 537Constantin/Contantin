@@ -81,6 +81,11 @@ export default function DatenschutzPage() {
           die USA wird auf Standardvertragsklauseln gestützt; mit OpenAI ist ein
           Auftragsverarbeitungsvertrag abzuschließen.
         </p>
+        <p>
+          <strong>Hinweis:</strong> KI-generierte Ergebnisse können unrichtig oder unvollständig sein und
+          stellen keine rechtliche, steuerliche, medizinische oder sonstige fachliche Beratung dar. Bitte
+          prüfe Ergebnisse vor einer Verwendung eigenverantwortlich (siehe auch unsere AGB).
+        </p>
       </LegalSection>
 
       <LegalSection title="8. Datenbank">
@@ -105,7 +110,51 @@ export default function DatenschutzPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="11. Deine Rechte">
+      <LegalSection title="11. Cookies & lokale Speicherung, Einwilligung">
+        <p>
+          Wir verwenden technisch notwendige Speicherung (z. B. Cookies bzw. localStorage), damit die
+          Anwendung funktioniert – etwa für Anmeldung, Sitzung und deine Einstellungen. Diese ist für den
+          Betrieb erforderlich (Art. 6 Abs. 1 lit. f DSGVO bzw. § 25 Abs. 2 TDDDG). Optionale Cookies oder
+          Analyse-/Tracking-Technologien setzen wir nur mit deiner ausdrücklichen Einwilligung ein
+          (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG), die du über das Einwilligungs-Banner erteilst und
+          jederzeit für die Zukunft widerrufen kannst.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="12. Postfach-Anbindung (IMAP/SMTP)">
+        <p>
+          Wenn du dein E-Mail-Postfach verbindest, verarbeiten wir die von dir angegebenen Zugangsdaten sowie
+          die abgerufenen E-Mail-Inhalte, um den Posteingang darzustellen, Nachrichten zu analysieren und
+          Antworten in deinem Auftrag zu versenden (Art. 6 Abs. 1 lit. b DSGVO). Zugangsdaten werden
+          <strong> verschlüsselt gespeichert</strong> und ausschließlich serverseitig zum Verbindungsaufbau
+          entschlüsselt; sie werden nicht an den Browser übertragen. E-Mail-Inhalte, die du zur KI-Analyse
+          übergibst, werden gemäß Ziffer 7 verarbeitet. Du kannst die Verbindung jederzeit trennen, wodurch
+          die gespeicherten Zugangsdaten gelöscht werden.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="13. Anmeldung am Postfach über OAuth (Google/Microsoft)">
+        <p>
+          Alternativ kannst du dein Postfach per OAuth von Google (Google Ireland Ltd./Google LLC) oder
+          Microsoft (Microsoft Ireland Operations Ltd.) verbinden. Dabei erhalten wir ein Zugriffs- bzw.
+          Aktualisierungs-Token für den E-Mail-Zugriff; dein Passwort erhalten wir nicht. Das
+          Aktualisierungs-Token wird verschlüsselt gespeichert, Zugriffstokens werden bei Bedarf neu
+          angefordert und nicht dauerhaft gespeichert. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO. Du
+          kannst den Zugriff jederzeit in deinem Google-/Microsoft-Konto und durch Trennen der Verbindung
+          widerrufen.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="14. Push-Benachrichtigungen">
+        <p>
+          Sofern du Push-Benachrichtigungen aktivierst, speichern wir die dafür nötigen Abo-Daten deines
+          Browsers/Geräts (Push-Endpoint und Schlüssel), um dich z. B. an Termine zu erinnern
+          (Art. 6 Abs. 1 lit. a DSGVO). Du kannst die Benachrichtigungen jederzeit in der App oder in den
+          Browser-/Systemeinstellungen wieder deaktivieren.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="15. Deine Rechte">
         <p>Dir stehen hinsichtlich deiner personenbezogenen Daten folgende Rechte zu:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>Auskunft (Art. 15 DSGVO)</li>
@@ -122,7 +171,7 @@ export default function DatenschutzPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="12. Speicherdauer">
+      <LegalSection title="16. Speicherdauer">
         <p>
           Wir verarbeiten und speichern personenbezogene Daten nur so lange, wie es für den jeweiligen Zweck
           erforderlich ist oder gesetzliche Aufbewahrungsfristen dies vorsehen. Danach werden die Daten
@@ -130,7 +179,7 @@ export default function DatenschutzPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="13. Änderungen">
+      <LegalSection title="17. Änderungen">
         <p>
           Wir passen diese Datenschutzerklärung an, sobald Änderungen der Dienste oder der Rechtslage dies
           erforderlich machen. Es gilt die jeweils aktuelle, hier veröffentlichte Fassung.

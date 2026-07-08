@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/site/theme-provider";
 import { SplashScreen } from "@/components/app/splash-screen";
+import { CookieConsent } from "@/components/site/cookie-consent";
 import { clerkEnabled } from "@/lib/auth";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <SplashScreen />
           {children}
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>
