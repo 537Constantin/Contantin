@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles, ListChecks, CalendarClock, ReceiptText, ArrowRight, CalendarPlus, Check } from "lucide-react";
+import { Sparkles, ListChecks, CalendarClock, ReceiptText, ArrowRight, CalendarPlus, Check, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PRIORITY_META, type EmailAnalysis } from "@/lib/inbox";
@@ -199,6 +199,11 @@ export function EmailAnalysisPanel({
           })}
         </div>
       </div>
+
+      <p className="flex items-start gap-1.5 border-t border-border/60 pt-3 text-[11px] leading-relaxed text-muted">
+        <Info className="mt-px h-3.5 w-3.5 shrink-0" />
+        KI-generiert – Ergebnisse können Fehler enthalten. Bitte vor der Nutzung prüfen; keine rechtliche, steuerliche oder medizinische Beratung.
+      </p>
     </div>
   );
 }
