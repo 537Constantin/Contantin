@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles, Plus, Info } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { LiveStats } from "@/components/app/live-stats";
 import { TodayPlan } from "@/components/app/today-plan";
+import { OnboardingChecklist } from "@/components/app/onboarding-checklist";
 import { ActivityFeed } from "@/components/app/activity-feed";
 import { BarChart, AreaChart, Donut } from "@/components/app/charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,11 @@ export default function DashboardPage() {
           </Link>
         </Button>
       </PageHeader>
+
+      {/* Getting-started checklist — hides itself once done/dismissed */}
+      <div className="mt-6">
+        <OnboardingChecklist />
+      </div>
 
       {/* KI-Tagesplan aus dem echten Kalender */}
       <div className="mt-6">
