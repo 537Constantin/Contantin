@@ -13,6 +13,7 @@ import {
   UsersRound,
   Settings,
   GraduationCap,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +41,7 @@ export const navGroups: NavGroup[] = [
       { label: "KI-Mitarbeiter", href: "/employees", icon: Users },
       { label: "Belege", href: "/receipts", icon: ReceiptText },
       { label: "Dokumente", href: "/documents", icon: FileText },
+      { label: "Sicherheit", href: "/security", icon: ShieldCheck },
     ],
   },
   {
