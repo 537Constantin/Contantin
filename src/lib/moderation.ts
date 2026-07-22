@@ -38,7 +38,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 };
 
 // High-severity categories that force a hard block once clearly present.
-const SEVERE = new Set([
+export const SEVERE = new Set([
   "sexual",
   "sexual/minors",
   "violence/graphic",
@@ -74,7 +74,27 @@ export function toModerationResult(
   if (severeHit) verdict = "blocked";
   else if (flagged || maxScore >= WARN_SCORE) verdict = "warning";
 
-  return { verdict, flagged, maxScore, top: list.slice(0, 6) };
+  // Return the full sorted list so the client can re-judge at its own
+  // sensitivity; the UI only displays the top few.
+  return { verdict, flagged, maxScore, top: list };
+}
+
+export type Sensitivity = "low" | "medium" | "high";
+
+export const SENSITIVITY_META: Record<Sensitivity, { label: string; warn: number; block: number }> = {
+  low: { label: "Niedrig", warn: 0.5, block: 0.7 },
+  medium: { label: "Mittel", warn: 0.3, block: 0.5 },
+  high: { label: "Hoch", warn: 0.15, block: 0.35 },
+};
+
+/** Re-judge a result at a chosen sensitivity (client-side, live-adjustable). */
+export function verdictAt(top: CategoryResult[], flagged: boolean, sensitivity: Sensitivity): Verdict {
+  const th = SENSITIVITY_META[sensitivity];
+  const severeHit = top.some((c) => SEVERE.has(c.key) && (c.flagged || c.score >= th.block));
+  const maxScore = top.reduce((m, c) => Math.max(m, c.score), 0);
+  if (severeHit) return "blocked";
+  if (flagged || maxScore >= th.warn) return "warning";
+  return "safe";
 }
 
 export const VERDICT_META: Record<Verdict, { label: string; cls: string; dot: string }> = {

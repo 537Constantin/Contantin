@@ -3,12 +3,15 @@
 import * as React from "react";
 import {
   ShieldCheck, ShieldAlert, Play, Square, Loader2, MonitorUp, Camera,
-  MessageSquareText, Download, AlertTriangle, Info,
+  MessageSquareText, Download, AlertTriangle, Info, Volume2, VolumeX, EyeOff,
 } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { VERDICT_META, type ModerationResult, type Verdict } from "@/lib/moderation";
+import {
+  VERDICT_META, SENSITIVITY_META, verdictAt,
+  type ModerationResult, type Verdict, type Sensitivity,
+} from "@/lib/moderation";
 import { tapHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +26,23 @@ interface LogEvent {
   thumb: string;
 }
 
-const inputCls =
-  "h-11 w-full rounded-xl border border-border bg-surface-soft/50 px-3.5 text-sm text-ink placeholder:text-muted focus:border-accent/40 focus:bg-surface focus:outline-none";
+/** Short alarm beep via WebAudio – no asset needed. */
+function alarmBeep() {
+  try {
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AC();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.14, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.28);
+    osc.onended = () => ctx.close().catch(() => {});
+  } catch { /* audio not available */ }
+}
 
 /** Grab a downscaled JPEG frame from a <video> element. */
 function captureFrame(video: HTMLVideoElement, maxW = 512): string | null {
@@ -47,12 +65,22 @@ export default function SecurityPage() {
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const inFlight = React.useRef(false);
 
+  const prevVerdict = React.useRef<Verdict>("safe");
+
   const [source, setSource] = React.useState<Source>("screen");
   const [intervalSec, setIntervalSec] = React.useState(3);
+  const [sensitivity, setSensitivity] = React.useState<Sensitivity>("medium");
+  const [soundOn, setSoundOn] = React.useState(true);
+  const [hideOnDanger, setHideOnDanger] = React.useState(true);
   const [running, setRunning] = React.useState(false);
   const [current, setCurrent] = React.useState<ModerationResult | null>(null);
+  const [currentVerdict, setCurrentVerdict] = React.useState<Verdict>("safe");
   const [log, setLog] = React.useState<LogEvent[]>([]);
   const [error, setError] = React.useState("");
+
+  // Latest settings for the sampling loop (which closes over the first render).
+  const settings = React.useRef({ sensitivity, soundOn });
+  settings.current = { sensitivity, soundOn };
 
   const [text, setText] = React.useState("");
   const [textResult, setTextResult] = React.useState<ModerationResult | null>(null);
@@ -86,15 +114,21 @@ export default function SecurityPage() {
         return;
       }
       const result = j as ModerationResult;
+      const verdict = verdictAt(result.top, result.flagged, settings.current.sensitivity);
       setCurrent(result);
-      if (result.verdict !== "safe") {
-        tapHaptic(result.verdict === "blocked" ? 20 : 12);
+      setCurrentVerdict(verdict);
+
+      if (verdict !== "safe") {
+        tapHaptic(verdict === "blocked" ? 20 : 12);
+        // Alarm only when entering a worse state, so it doesn't beep every tick.
+        const worsened = prevVerdict.current === "safe" || (prevVerdict.current === "warning" && verdict === "blocked");
+        if (settings.current.soundOn && worsened) alarmBeep();
         const top = result.top[0];
         setLog((l) => [
           {
             id: crypto.randomUUID?.() ?? String(Date.now()),
             time: new Date().toLocaleTimeString("de-DE"),
-            verdict: result.verdict,
+            verdict,
             label: top?.label ?? "—",
             score: top?.score ?? 0,
             thumb: frame,
@@ -102,6 +136,7 @@ export default function SecurityPage() {
           ...l,
         ].slice(0, 100));
       }
+      prevVerdict.current = verdict;
     } catch {
       setError("Verbindung fehlgeschlagen.");
     } finally {
@@ -126,6 +161,8 @@ export default function SecurityPage() {
       stream.getVideoTracks()[0]?.addEventListener("ended", stop);
       setRunning(true);
       setCurrent(null);
+      setCurrentVerdict("safe");
+      prevVerdict.current = "safe";
       void sampleOnce();
       timerRef.current = setInterval(sampleOnce, intervalSec * 1000);
     } catch (err) {
@@ -164,7 +201,8 @@ export default function SecurityPage() {
     URL.revokeObjectURL(url);
   }
 
-  const v = current ? VERDICT_META[current.verdict] : null;
+  const v = VERDICT_META[currentVerdict];
+  const blockedNow = running && currentVerdict === "blocked" && hideOnDanger;
 
   return (
     <PageShell>
@@ -226,6 +264,35 @@ export default function SecurityPage() {
                     ))}
                   </div>
                 </div>
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Empfindlichkeit</p>
+                  <div className="flex gap-2">
+                    {(["low", "medium", "high"] as Sensitivity[]).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSensitivity(s)}
+                        className={cn("rounded-lg px-3 py-1.5 text-sm font-medium transition-colors", sensitivity === s ? "bg-accent/15 text-accent ring-1 ring-accent/25" : "bg-surface-soft text-ink-soft hover:text-ink")}
+                      >
+                        {SENSITIVITY_META[s].label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-muted">Höher = schlägt schon bei geringerem Verdacht an.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSoundOn((v) => !v)}
+                    className={cn("flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors", soundOn ? "bg-accent/15 text-accent ring-1 ring-accent/25" : "bg-surface-soft text-ink-soft hover:text-ink")}
+                  >
+                    {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />} Alarm-Ton
+                  </button>
+                  <button
+                    onClick={() => setHideOnDanger((v) => !v)}
+                    className={cn("flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors", hideOnDanger ? "bg-accent/15 text-accent ring-1 ring-accent/25" : "bg-surface-soft text-ink-soft hover:text-ink")}
+                  >
+                    <EyeOff className="h-4 w-4" /> Bei Gefahr ausblenden
+                  </button>
+                </div>
                 <p className="flex items-start gap-1.5 text-xs text-muted">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   Bei Bildschirm-Freigabe im Dialog dein Zoom-Fenster wählen. Frames werden zur Prüfung an die
@@ -239,13 +306,20 @@ export default function SecurityPage() {
             <CardContent className="p-4">
               <div className="relative overflow-hidden rounded-xl bg-black/80">
                 {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                <video ref={videoRef} muted playsInline className={cn("mx-auto max-h-[340px] w-full object-contain", !running && "hidden")} />
+                <video ref={videoRef} muted playsInline className={cn("mx-auto max-h-[340px] w-full object-contain", !running && "hidden", blockedNow && "blur-2xl")} />
                 {!running && (
                   <div className="flex h-56 items-center justify-center text-sm text-muted">
                     Noch keine Live-Quelle – oben auf Live starten tippen.
                   </div>
                 )}
-                {v && running && (
+                {blockedNow && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-danger/25 text-center backdrop-blur-xl">
+                    <EyeOff className="h-8 w-8 text-white" />
+                    <p className="text-sm font-semibold text-white">Inhalt blockiert</p>
+                    <p className="text-xs text-white/80">Gefährlicher/NSFW-Inhalt erkannt – Bild ausgeblendet</p>
+                  </div>
+                )}
+                {running && (
                   <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur">
                     <span className={cn("h-2 w-2 rounded-full", v.dot)} />
                     <span className="text-xs font-semibold text-white">{v.label}</span>
@@ -255,9 +329,9 @@ export default function SecurityPage() {
 
               {current && (
                 <div className="mt-4">
-                  <div className={cn("mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold", v?.cls)}>
-                    {current.verdict === "safe" ? <ShieldCheck className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
-                    {v?.label}
+                  <div className={cn("mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold", v.cls)}>
+                    {currentVerdict === "safe" ? <ShieldCheck className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+                    {v.label}
                   </div>
                   <div className="space-y-1.5">
                     {current.top.slice(0, 5).map((c) => (
@@ -294,13 +368,16 @@ export default function SecurityPage() {
               <Button variant="accent" size="sm" onClick={checkText} disabled={checkingText || !text.trim()}>
                 {checkingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Text prüfen
               </Button>
-              {textResult && (
-                <div className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold", VERDICT_META[textResult.verdict].cls)}>
-                  {textResult.verdict === "safe" ? <ShieldCheck className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
-                  {VERDICT_META[textResult.verdict].label}
-                  {textResult.top[0] && textResult.verdict !== "safe" && <span className="font-normal">· {textResult.top[0].label}</span>}
-                </div>
-              )}
+              {textResult && (() => {
+                const tv = verdictAt(textResult.top, textResult.flagged, sensitivity);
+                return (
+                  <div className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold", VERDICT_META[tv].cls)}>
+                    {tv === "safe" ? <ShieldCheck className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+                    {VERDICT_META[tv].label}
+                    {textResult.top[0] && tv !== "safe" && <span className="font-normal">· {textResult.top[0].label}</span>}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
